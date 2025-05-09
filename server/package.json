@@ -1,9 +1,10 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "main": "server.ts",
+  "main": "server.js",
+  "type": "module",
   "scripts": {
-    "start": "tsx ./server.ts"
+    "start": "node server.js"
   },
   "author": "",
   "license": "ISC",
@@ -16,7 +17,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.16.0",
     "mongoose": "^8.14.1",
-    "tsx": "^4.19.4"
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.18",
