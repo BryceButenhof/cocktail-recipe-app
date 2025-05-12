@@ -22,6 +22,11 @@ const toIngredientResponse = (ingredient) => {
     }
 };
 
+const isValidIngredient = async (id) => {
+    const ingredient = await IngredientModel.findOne({id: id});
+    return ingredient && !ingredient.isDeleted;
+}
+
 // Get all ingredients
 router.get('/', async (_, res) => {
     try {
@@ -54,7 +59,34 @@ router.post('/', async (req, res) => {
         const ingredient = new IngredientModel({ ...req.body, createdBy: user._id });
         res.status(201).json(await ingredient.save());
     } catch (error) {
-        console.log(error);
+        res.status(400).json(error);
+    }
+});
+
+// Update an ingredient
+router.patch('/:id', async (req, res) => {
+    try {
+        if (!req.params.id && !await isValidIngredient(req.params.id)) {
+            return res.status(400).json({ message: 'Ingredient not found' });
+        }
+
+        const updatedIngredient = await IngredientModel.findOneAndUpdate({ id: req.params.id }, { ...req.body, lastUpdated: Date.now() }, { new: true });
+        res.status(200).json(updatedIngredient);
+    } catch (error) {
+        res.status(400).json(error);
+    }
+});
+
+// Delete an ingredient
+router.delete('/:id', async (req, res) => {
+    try {
+        if (!req.params.id && !await isValidIngredient(req.params.id)) {
+            return res.status(400).json({ message: 'Ingredient not found' });
+        }
+
+        await IngredientModel.findOneAndUpdate({ id: req.params.id }, { isDeleted: true, lastUpdated: Date.now() }, { new: true });
+        res.status(200).json({ message: 'Ingredient deleted' });
+    } catch (error) {
         res.status(400).json(error);
     }
 });
