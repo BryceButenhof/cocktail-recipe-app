@@ -47,15 +47,15 @@ const RecipeSchema = new Schema({
                 type: String,
                 required: true,
             },
-            recipeId: {
+            id: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'recipes',
-                default: null,
+                ref: function() { return this.isRecipe ? 'recipes' : 'ingredients'; },
+                required: true
             },
-            ingredientId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'ingredients',
-                default: null,
+            isRecipe: {
+                type: Boolean,
+                default: false,
+                required: true
             }
         }
     ],
