@@ -9,7 +9,8 @@ const IngredientSchema = new Schema({
         type: String,
         default: uuid,
         required: true,
-        unique: true
+        unique: true,
+        immutable: true
     },
     name: {
         type: String,
@@ -44,12 +45,14 @@ const IngredientSchema = new Schema({
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
-        required: true
+        required: true,
+        immutable: true
     },
     createdAt: {
         type: Date,
         default: Date.now,
-        required: true
+        required: true,
+        immutable: true
     },
     lastUpdated: {
         type: Date,
