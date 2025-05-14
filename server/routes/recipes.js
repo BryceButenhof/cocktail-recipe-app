@@ -115,6 +115,46 @@ router.get('/', async (_, res) => {
     }
 });
 
+// Get all recipe previews
+router.get('/preview', async (_, res) => {
+    try {
+        const recipes = await RecipeModel.find({ isDeleted: false })
+            .populate([
+                {
+                    'path': 'createdBy',
+                    'select': [ 'id', 'username', 'isDeleted' ]
+                },
+                {
+                    'path': 'ingredients.id',
+                    'select': [ 'name' ]
+                }
+            ])
+            .collation({ locale: "en" })
+            .sort({ name: 1 });
+
+        const recipePreviews = recipes.map(recipe => ({
+            id: recipe.id,
+            name: recipe.name,
+            description: recipe.description,
+            ingredients: recipe.ingredients.map(ingredient => (ingredient.id.name)),
+            abv: recipe.abv,
+            imageUrl: recipe.imageUrl,
+            tags: recipe.tags,
+            isPublic: recipe.isPublic,
+            isDeleted: recipe.isDeleted,
+            createdBy: {
+                id: recipe.createdBy.id,
+                username: recipe.createdBy.username,
+                isDeleted: recipe.createdBy.isDeleted,
+            }
+        }));
+
+        res.status(200).json(recipePreviews);
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
+});
+
 // Get recipe by id
 router.get('/:id', async (req, res) => {
     try {
