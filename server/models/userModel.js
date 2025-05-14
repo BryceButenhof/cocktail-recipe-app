@@ -7,7 +7,8 @@ const UserSchema = new Schema({
         type: String,
         default: uuid,
         required: true,
-        unique: true
+        unique: true,
+        immutable: true
     },
     username: {
         type: String,
@@ -17,7 +18,7 @@ const UserSchema = new Schema({
     email: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
     },
     password: {
         type: String,
@@ -47,7 +48,8 @@ const UserSchema = new Schema({
     createdAt: {
         type: Date,
         default: Date.now,
-        required: true
+        required: true,
+        immutable: true
     },
     lastUpdated: {
         type: Date,
