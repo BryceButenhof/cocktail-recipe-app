@@ -5,6 +5,7 @@ import 'dotenv/config';
 import { RecipesRouter } from './routes/recipes.js';
 import { IngredientsRouter } from './routes/ingredients.js';
 import { UsersRouter } from './routes/users.js';
+import { CollectionsRouter } from './routes/collections.js';
 
 const PORT = process.env.PORT || 5050;
 const app = express();
@@ -16,6 +17,7 @@ app.use(cors());
 app.use('/recipes', RecipesRouter);
 app.use('/ingredients', IngredientsRouter);
 app.use('/users', UsersRouter);
+app.use('/collections', CollectionsRouter);
 
 if (!process.env.ATLAS_URI) {
     throw new Error('ATLAS_URI is not defined in the environment variables');
