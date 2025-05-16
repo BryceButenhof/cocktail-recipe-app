@@ -98,7 +98,7 @@ IngredientSchema.methods.toIngredientResponse = function() {
 }
 
 IngredientSchema.pre(['find', 'findOne', 'findOneAndUpdate'], function() {
-    this.select(fieldsToSelect).populate(fieldsToPopulate);
+    this.populate(fieldsToPopulate);
 });
 
 IngredientSchema.post('save', function(document, next) {

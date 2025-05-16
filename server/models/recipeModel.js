@@ -113,4 +113,69 @@ const RecipeSchema = new Schema({
     }
 });
 
+RecipeSchema.methods.toRecipeResponse = function() {
+    return {
+        id: this.id,
+        type: this.type,
+        name: this.name,
+        description: this.description,
+        instructions: this.instructions,
+        method: this.method,
+        ingredients: this.ingredients.map(ingredient => ({
+            id: ingredient.id.id,
+            quantity: ingredient.quantity,
+            unit: ingredient.unit,
+            name: ingredient.id.name,
+            type: ingredient.id.type,
+            isRecipe: ingredient.isRecipe,
+            isDeleted: ingredient.id.isDeleted
+        })),
+        abv: this.abv,
+        imageUrl: this.imageUrl,
+        tags: this.tags,
+        isSubRecipe: this.isSubRecipe,
+        isPublic: this.isPublic,
+        isDeleted: this.isDeleted,
+        createdBy: this.createdBy,
+        createdAt: this.createdAt,
+        lastUpdated: this.lastUpdated
+    };
+};
+
+RecipeSchema.methods.toPreviewResponse = function() {
+    return {
+        id: this.id,
+        name: this.name,
+        description: this.description,
+        ingredients: this.ingredients.map(ingredient => ingredient.id.name),
+        abv: this.abv,
+        imageUrl: this.imageUrl,
+        tags: this.tags,
+        isPublic: this.isPublic,
+        isDeleted: this.isDeleted,
+        createdBy: this.createdBy
+    };
+};
+
+const fieldsToPopulate = [
+    {
+        'path': 'createdBy',
+        'select': [ 'id', 'username', 'isDeleted', '-_id']
+    },
+    {
+        'path': 'ingredients.id',
+        'select': [ 'id', 'name', 'type', 'abv', 'isDeleted', '-_id' ]
+    }
+];
+
+RecipeSchema.pre(['find', 'findOne', 'findOneAndUpdate'], function() {
+    this.populate(fieldsToPopulate);
+});
+
+RecipeSchema.post('save', function(document, next) {
+    document.populate(fieldsToPopulate).then(() => {
+        next();
+    });
+});
+
 export const RecipeModel = mongoose.model('recipes', RecipeSchema);

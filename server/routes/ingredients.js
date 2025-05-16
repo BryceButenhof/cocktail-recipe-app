@@ -8,10 +8,9 @@ router.get('/', async (_, res) => {
     try {
         const ingredients = await IngredientModel.find({isDeleted: false})
             .collation({ locale: "en" })
-            .sort({ name: 1 })
-            .lean();
+            .sort({ name: 1 });
         
-        res.status(200).json(ingredients);
+        res.status(200).json(ingredients.map(ingredient => ingredient.toIngredientResponse()));
     } catch (error) {
         console.error(error);
         res.status(404).json({ message: error.message });
@@ -21,10 +20,10 @@ router.get('/', async (_, res) => {
 // Get ingredient by id
 router.get('/:id', async (req, res) => {
     try {
-        const ingredient = await IngredientModel.findOne({ id: req.params.id, isDeleted: false }).lean();
+        const ingredient = await IngredientModel.findOne({ id: req.params.id, isDeleted: false });
 
         ingredient ? 
-            res.status(200).json(ingredient) : 
+            res.status(200).json(ingredient.toIngredientResponse()) : 
             res.status(404).json({ message: `Ingredient with id ${req.params.id} was not found` });
     } catch (error) {
         res.status(404).json({ message: error.message });
@@ -53,13 +52,13 @@ router.patch('/:id', async (req, res) => {
             { id: req.params.id, isDeleted: false }, 
             { ...req.body, lastUpdated: Date.now() }, 
             { new: true }
-        ).lean();
+        );
 
         if (!updatedIngredient) {
             return res.status(404).json({ message: `Ingredient with id ${req.params.id} was not found` });
         }
 
-        res.status(200).json(updatedIngredient);
+        res.status(200).json(updatedIngredient.toIngredientResponse);
     } catch (error) {
         res.status(400).json(error);
     }

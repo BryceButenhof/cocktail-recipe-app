@@ -5,50 +5,6 @@ import express from 'express';
 
 const router = express.Router();
 
-const fieldsToPopulate = [
-    {
-        'path': 'createdBy',
-        'select': [ 'id', 'username', 'isDeleted' ]
-    },
-    {
-        'path': 'ingredients.id',
-        'select': [ 'id', 'name', 'type', 'abv', 'isDeleted' ]
-    }
-];
-
-const toRecipeResponse = (recipe) => {
-    return {
-        id: recipe.id,
-        type: recipe.type,
-        name: recipe.name,
-        description: recipe.description,
-        instructions: recipe.instructions,
-        method: recipe.method,
-        ingredients: recipe.ingredients.map(ingredient => ({
-            id: ingredient.id.id,
-            quantity: ingredient.quantity,
-            unit: ingredient.unit,
-            name: ingredient.id.name,
-            type: ingredient.id.type,
-            isRecipe: ingredient.isRecipe,
-            isDeleted: ingredient.id.isDeleted
-        })),
-        abv: recipe.abv,
-        imageUrl: recipe.imageUrl,
-        tags: recipe.tags,
-        isSubRecipe: recipe.isSubRecipe,
-        isPublic: recipe.isPublic,
-        isDeleted: recipe.isDeleted,
-        createdBy: {
-            id: recipe.createdBy.id,
-            username: recipe.createdBy.username,
-            isDeleted: recipe.createdBy.isDeleted,
-        },
-        createdAt: recipe.createdAt,
-        lastUpdated: recipe.lastUpdated
-    };
-};
-
 const getAndValidateIngredients = async (ingredientsRequest) => {
     const ingredientIds = ingredientsRequest.filter(ingredient => !ingredient.isRecipe).map(ingredient => ingredient.id);
     const subrecipeIds = ingredientsRequest.filter(ingredient => ingredient.isRecipe).map(ingredient => ingredient.id);
@@ -105,11 +61,10 @@ const calculateABV = (ingredientDocuments, ingredientsRequest, method) => {
 router.get('/', async (_, res) => {
     try {
         const recipes = await RecipeModel.find({ isDeleted: false })
-            .populate(fieldsToPopulate)
             .collation({ locale: "en" })
             .sort({ name: 1 });
 
-        res.status(200).json(recipes.map(toRecipeResponse));
+        res.status(200).json(recipes.map(recipe => recipe.toRecipeResponse()));
     } catch (error) {
         res.status(404).json({ message: error.message });
     }
@@ -119,37 +74,10 @@ router.get('/', async (_, res) => {
 router.get('/preview', async (_, res) => {
     try {
         const recipes = await RecipeModel.find({ isDeleted: false })
-            .populate([
-                {
-                    'path': 'createdBy',
-                    'select': [ 'id', 'username', 'isDeleted' ]
-                },
-                {
-                    'path': 'ingredients.id',
-                    'select': [ 'name' ]
-                }
-            ])
             .collation({ locale: "en" })
             .sort({ name: 1 });
 
-        const recipePreviews = recipes.map(recipe => ({
-            id: recipe.id,
-            name: recipe.name,
-            description: recipe.description,
-            ingredients: recipe.ingredients.map(ingredient => (ingredient.id.name)),
-            abv: recipe.abv,
-            imageUrl: recipe.imageUrl,
-            tags: recipe.tags,
-            isPublic: recipe.isPublic,
-            isDeleted: recipe.isDeleted,
-            createdBy: {
-                id: recipe.createdBy.id,
-                username: recipe.createdBy.username,
-                isDeleted: recipe.createdBy.isDeleted,
-            }
-        }));
-
-        res.status(200).json(recipePreviews);
+        res.status(200).json(await Promise.all(recipes.map(recipe => recipe.toPreviewResponse())));
     } catch (error) {
         res.status(404).json({ message: error.message });
     }
@@ -158,8 +86,8 @@ router.get('/preview', async (_, res) => {
 // Get recipe by id
 router.get('/:id', async (req, res) => {
     try {
-        const recipe = await RecipeModel.findOne({ id: req.params.id, isDeleted: false }).populate(fieldsToPopulate);
-        recipe ? res.status(200).json(toRecipeResponse(recipe)) : res.status(404).json();
+        const recipe = await RecipeModel.findOne({ id: req.params.id, isDeleted: false });
+        recipe ? res.status(200).json(recipe.toRecipeResponse()) : res.status(404).json();
     } catch (error) {
         res.status(404).json({ message: error.message });
     }
@@ -178,9 +106,10 @@ router.post('/', async (req, res) => {
         const formattedIngredients = formatIngredients(ingredientDocuments, req.body.ingredients);
         const abv = calculateABV(ingredientDocuments, req.body.ingredients, req.body.method)
         const recipe = new RecipeModel({ ...req.body, createdBy: user._id, ingredients: formattedIngredients, abv});
+        console.log(formattedIngredients);
         const savedRecipe = await recipe.save();
 
-        res.status(201).json(toRecipeResponse(await savedRecipe.populate(fieldsToPopulate)));
+        res.status(201).json(savedRecipe.toRecipeResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
@@ -203,7 +132,7 @@ router.patch('/:id', async (req, res) => {
         }
 
         const updatedRecipe = await RecipeModel.findOneAndUpdate({ id: req.params.id }, { ...req.body, ...fieldsToUpdate, lastUpdated: Date.now() }, { new: true });
-        res.status(200).json(toRecipeResponse(await updatedRecipe.populate(fieldsToPopulate)));
+        res.status(200).json(updatedRecipe.toRecipeResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
