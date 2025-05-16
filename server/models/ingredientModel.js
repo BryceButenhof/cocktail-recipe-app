@@ -61,4 +61,50 @@ const IngredientSchema = new Schema({
     }
 });
 
+const fieldsToPopulate = [
+    {
+        'path': 'createdBy',
+        'select': ['id', 'username', 'isDeleted', '-_id']
+    }
+];
+
+const fieldsToSelect = [
+    '-_id',
+    'id',
+    'name',
+    'description',
+    'type',
+    'abv',
+    'imageUrl',
+    'createdBy',
+    'isDeleted',
+    'createdAt',
+    'lastUpdated'
+];
+
+IngredientSchema.methods.toIngredientResponse = function() {
+    return {
+        id: this.id,
+        name: this.name,
+        description: this.description,
+        type: this.type,
+        abv: this.abv,
+        imageUrl: this.imageUrl,
+        createdBy: this.createdBy,
+        isDeleted: this.isDeleted,
+        createdAt: this.createdAt,
+        lastUpdated: this.lastUpdated
+    };
+}
+
+IngredientSchema.pre(['find', 'findOne', 'findOneAndUpdate'], function() {
+    this.select(fieldsToSelect).populate(fieldsToPopulate);
+});
+
+IngredientSchema.post('save', function(document, next) {
+    document.populate(fieldsToPopulate).then(() => {
+        next();
+    });
+});
+
 export const IngredientModel = mongoose.model('ingredients', IngredientSchema);
