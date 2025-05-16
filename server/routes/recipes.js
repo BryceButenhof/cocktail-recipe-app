@@ -105,11 +105,9 @@ router.post('/', async (req, res) => {
         const ingredientDocuments = await getAndValidateIngredients(req.body.ingredients);
         const formattedIngredients = formatIngredients(ingredientDocuments, req.body.ingredients);
         const abv = calculateABV(ingredientDocuments, req.body.ingredients, req.body.method)
-        const recipe = new RecipeModel({ ...req.body, createdBy: user._id, ingredients: formattedIngredients, abv});
-        console.log(formattedIngredients);
-        const savedRecipe = await recipe.save();
+        const recipe = new RecipeModel({ ...req.body, createdBy: user._id, ingredients: formattedIngredients, abv}).save();
 
-        res.status(201).json(savedRecipe.toRecipeResponse());
+        res.status(201).json(recipe.toRecipeResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
