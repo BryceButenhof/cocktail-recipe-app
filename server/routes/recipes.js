@@ -12,16 +12,10 @@ const getAndValidateIngredients = async (ingredientsRequest) => {
 
     if (ingredientIds.length > 0) {
         ingredients = await IngredientModel.find({ id: { $in: ingredientIds } });
-        if (ingredients.length !== ingredientIds.length) {
-            throw new Error('Some ingredients not found');
-        }
     }
 
     if (subrecipeIds.length > 0) {
         subRecipes = await RecipeModel.find({ id: { $in: subrecipeIds } });
-        if (subRecipes.length !== subrecipeIds.length) {
-            throw new Error('Some ingredients not found');
-        }
     }
 
     return [ ...ingredients, ...subRecipes ];
@@ -30,6 +24,11 @@ const getAndValidateIngredients = async (ingredientsRequest) => {
 const formatIngredients = (ingredientDocuments, ingredientsRequest) => {
     return ingredientsRequest.map(ingredient => {
         const ingredientData = ingredientDocuments.find(i => i.id === ingredient.id);
+
+        if (!ingredientData) {
+            throw new Error(`${ingredient.isRecipe ? 'Subrecipe': 'Ingredient'} with id ${ingredient.id} not found`);
+        }
+
         return {
             quantity: ingredient.quantity,
             unit: ingredient.unit,
@@ -87,7 +86,9 @@ router.get('/preview', async (_, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const recipe = await RecipeModel.findOne({ id: req.params.id, isDeleted: false });
-        recipe ? res.status(200).json(recipe.toRecipeResponse()) : res.status(404).json();
+        recipe ? 
+            res.status(200).json(recipe.toRecipeResponse()) : 
+            res.status(404).json({ message: `Recipe with id ${req.params.id} was not found` });
     } catch (error) {
         res.status(404).json({ message: error.message });
     }
@@ -99,7 +100,7 @@ router.post('/', async (req, res) => {
         // Validate user exists and is not deleted
         const user = await UserModel.findOne({id: req.body.createdBy});
         if (!user || user.isDeleted) {
-            return res.status(400).json({ message: 'User not found' });
+            return res.status(400).json({ message: `User with id ${req.body.createdBy} was not found` });
         }
         
         const ingredientDocuments = await getAndValidateIngredients(req.body.ingredients);
@@ -118,7 +119,7 @@ router.patch('/:id', async (req, res) => {
     try {
         const recipe = await RecipeModel.findOne({ id: req.params.id, isDeleted: false });
         if (!recipe) {
-            return res.status(404).json({ message: 'Recipe not found' });
+            return res.status(404).json({ message: `Recipe with id ${req.params.id} was not found` });
         }
 
         let fieldsToUpdate = {};
@@ -146,7 +147,7 @@ router.delete('/:id', async (req, res) => {
         );
 
         if (!deletedRecipe) {
-            return res.status(404).json({ message: 'Recipe not found' });
+            return res.status(404).json({ message: `Recipe with id ${req.params.id} was not found` });
         }
 
         res.status(200).json({ message: 'Recipe deleted' });

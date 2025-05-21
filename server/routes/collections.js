@@ -17,7 +17,7 @@ const formatAndValidateRecipes = (recipeDocuments, recipes) => {
     return recipes.map(recipeId => {
         const document = recipeDocuments.find(r => r.id === recipeId);
         if (!document) {
-            throw new Error(`Recipe with id ${recipeId} not found`);
+            throw new Error(`Recipe with id ${recipeId} was not found`);
         }
         return document._id;
     });
@@ -29,7 +29,7 @@ const formatAndValidateSections = (recipeDocuments, sections) => {
         recipes: section.recipes.map(recipeId => {
             const document = recipeDocuments.find(r => r.id === recipeId)
             if (!document) {
-                throw new Error(`Recipe with id ${recipeId} not found`);
+                throw new Error(`Recipe with id ${recipeId} was not found`);
             }
             return document._id;
         })
@@ -42,7 +42,7 @@ router.get('/:id', async (req, res) => {
         const collection = await CollectionModel.findOne({ id: req.params.id });
         collection ? 
             res.status(200).json(collection.toCollectionResponse()) : 
-            res.status(404).json({ message: `Collection with id ${req.params.id} not found` });
+            res.status(404).json({ message: `Collection with id ${req.params.id} was not found` });
     } catch (error) {
         res.status(404).json({ message: error.message });
     }
@@ -52,12 +52,12 @@ router.get('/:id', async (req, res) => {
 router.get('/', async (req, res) => {
     try {
         if (!req.query.userId) {
-            return res.status(400).json({ message: 'User id is required' });
+            return res.status(400).json({ message: 'Parameter userId is required' });
         }
 
         const userId = await UserModel.findOne({id: req.query.userId, isDeleted: false}).select('_id');
         if (!userId) {
-            return res.status(400).json({ message: `User with id ${req.query.userId} not found` });
+            return res.status(400).json({ message: `User with id ${req.query.userId} was not found` });
         }
         
         const collections = await CollectionModel.find({ createdBy: userId });
@@ -72,7 +72,7 @@ router.post('/', async (req, res) => {
     try {
         const userId = await UserModel.findOne({id: req.body.createdBy, isDeleted: false}).select('_id');
         if (!userId) {
-            return res.status(400).json({ message: `User with id ${req.body.createdBy} not found` });
+            return res.status(400).json({ message: `User with id ${req.body.createdBy} was not found` });
         }
 
         const recipeDocuments = await findReferencedRecipes(req);
@@ -90,7 +90,7 @@ router.put('/:id', async (req, res) => {
     try {
         const collection = await CollectionModel.findOne({ id: req.params.id });
         if (!collection) {
-            return res.status(404).json({ message: `Collection with id ${req.params.id} not found` });
+            return res.status(404).json({ message: `Collection with id ${req.params.id} was not found` });
         }
 
         const recipeDocuments = await findReferencedRecipes(req);
@@ -112,9 +112,9 @@ router.delete('/:id', async (req, res) => {
     try {
         const result = await CollectionModel.deleteOne({ id: req.params.id });
         if (result.deletedCount === 0) {
-            return res.status(404).json({ message: `Collection with id ${req.params.id} not found` });
+            return res.status(404).json({ message: `Collection with id ${req.params.id} was not found` });
         }
-        res.status(200).json({ message: `Collection with id ${req.params.id} deleted` });
+        res.status(200).json({ message: 'Collection deleted' });
     } catch (error) {
         res.status(400).json({ message: error.message });
     }

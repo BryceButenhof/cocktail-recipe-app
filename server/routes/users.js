@@ -19,7 +19,9 @@ const toUserResponse = (user) => {
 router.get('/:id', async (req, res) => {
     try {
         const user = await UserModel.findOne({ id: req.params.id });
-        user && !user.isDeleted ? res.status(200).json(toUserResponse(user)) : res.status(404).json({ message: 'User not found' });
+        user && !user.isDeleted ? 
+            res.status(200).json(toUserResponse(user)) : 
+            res.status(404).json({ message: `User with id ${req.params.id} was not found` });
     } catch (error) {
         res.status(404).json(error);
     }
