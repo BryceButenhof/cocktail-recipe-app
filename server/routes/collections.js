@@ -5,7 +5,12 @@ import { RecipeModel } from '../models/recipeModel.js';
 const router = express.Router();
 
 const findReferencedRecipes = async (req) => {
-    const recipeIds = [ ...req.body.recipes, ...req.body.sections.flatMap(section => section.recipes) ];
+    let recipeIds = req.body.recipes || [];
+
+    if (req.body.sections && req.body.sections.length > 0) {
+        recipeIds = [ ...recipeIds, ...req.body.sections.flatMap(section => section.recipes) ];
+    }
+
     const recipeDocuments = await RecipeModel.find({ id: { $in: recipeIds } }).lean();
     return recipeDocuments.map(recipe => ({
         id: recipe.id,
@@ -14,6 +19,10 @@ const findReferencedRecipes = async (req) => {
 }
 
 const formatAndValidateRecipes = (recipeDocuments, recipes) => {
+    if (!recipes || recipes.length === 0) {
+        return [];
+    }
+
     return recipes.map(recipeId => {
         const document = recipeDocuments.find(r => r.id === recipeId);
         if (!document) {
@@ -24,6 +33,10 @@ const formatAndValidateRecipes = (recipeDocuments, recipes) => {
 }
 
 const formatAndValidateSections = (recipeDocuments, sections) => {
+    if (!sections || sections.length === 0) {
+        return [];
+    }
+
     return sections.map(section => ({
         ...section,
         recipes: section.recipes.map(recipeId => {
