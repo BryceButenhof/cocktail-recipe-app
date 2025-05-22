@@ -58,7 +58,7 @@ router.patch('/:id', async (req, res) => {
             return res.status(404).json({ message: `Ingredient with id ${req.params.id} was not found` });
         }
 
-        res.status(200).json(updatedIngredient.toIngredientResponse);
+        res.status(200).json(updatedIngredient.toIngredientResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
