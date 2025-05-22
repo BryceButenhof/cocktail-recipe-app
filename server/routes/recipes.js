@@ -26,7 +26,7 @@ const formatIngredients = (ingredientDocuments, ingredientsRequest) => {
         const ingredientData = ingredientDocuments.find(i => i.id === ingredient.id);
 
         if (!ingredientData) {
-            throw new Error(`${ingredient.isRecipe ? 'Subrecipe': 'Ingredient'} with id ${ingredient.id} not found`);
+            throw new Error(`${ingredient.isRecipe ? 'Subrecipe': 'Ingredient'} with id ${ingredient.id} was not found`);
         }
 
         return {
@@ -42,9 +42,12 @@ const calculateABV = (ingredientDocuments, ingredientsRequest, method) => {
     let totalVolume = 0, totalAlcohol = 0;
 
     for (const ingredient of ingredientsRequest) {
-        const ingredientData = ingredientDocuments.find(i => i.id === ingredient.id);
-        totalVolume += ingredient.quantity;
-        totalAlcohol += ingredientData.abv * ingredient.quantity / 100;
+        // TODO: Handle other units
+        if (ingredient.unit === 'oz') {
+            const ingredientData = ingredientDocuments.find(i => i.id === ingredient.id);
+            totalVolume += ingredient.quantity;
+            totalAlcohol += ingredientData.abv * ingredient.quantity / 100;
+        }
     }
 
     if (method === 'shaken') {
@@ -105,8 +108,8 @@ router.post('/', async (req, res) => {
         
         const ingredientDocuments = await getAndValidateIngredients(req.body.ingredients);
         const formattedIngredients = formatIngredients(ingredientDocuments, req.body.ingredients);
-        const abv = calculateABV(ingredientDocuments, req.body.ingredients, req.body.method)
-        const recipe = new RecipeModel({ ...req.body, createdBy: user._id, ingredients: formattedIngredients, abv}).save();
+        const abv = calculateABV(ingredientDocuments, req.body.ingredients, req.body.method);
+        const recipe = await new RecipeModel({ ...req.body, createdBy: user._id, ingredients: formattedIngredients, abv}).save();
 
         res.status(201).json(recipe.toRecipeResponse());
     } catch (error) {
