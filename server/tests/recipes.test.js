@@ -60,6 +60,7 @@ describe("Recipe API Tests", () => {
                     { id: whiskeyId, quantity: 2, unit: "oz" },
                 ],
                 instructions: "Shake with ice and strain into a glass.",
+                method: "shaken",
                 createdBy: "264b106a-7829-4f4a-b286-3a5aee4471e7",
             });
             expect(res.statusCode).toBe(201);
@@ -76,6 +77,7 @@ describe("Recipe API Tests", () => {
                     { id: whiskeyId, quantity: 2, unit: "oz" },
                 ],
                 instructions: "Shake with ice and strain into a glass.",
+                method: "shaken",
                 createdBy: "74e3fccc-8dde-470d-8e81-8600e917566b",
             });
             expect(res.statusCode).toBe(400);
@@ -92,6 +94,7 @@ describe("Recipe API Tests", () => {
                     { id: "c1e1fce9-f4f2-4cdf-99ad-959e20837789", quantity: 2, unit: "oz" },
                 ],
                 instructions: "Shake with ice and strain into a glass.",
+                method: "shaken",
                 createdBy: "264b106a-7829-4f4a-b286-3a5aee4471e7",
             });
             expect(res.statusCode).toBe(400);
