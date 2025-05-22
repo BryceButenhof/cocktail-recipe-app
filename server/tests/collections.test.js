@@ -94,11 +94,57 @@ describe("Collection API Tests", () => {
                 name: "Cocktail Collection",
                 description: "A collection of my favorite cocktails",
                 recipes: [goldRushId, margaritaId],
+                sections: [
+                    {
+                        name: "Section 1",
+                        description: "A collection of my favorite cocktails",
+                        recipes: [margaritaId, goldRushId],
+                    },
+                ],
+                createdBy: "264b106a-7829-4f4a-b286-3a5aee4471e7",
+            });
+            expect(res.statusCode).toBe(201);
+            expect(res.body.recipes.length).toBe(2);
+            expect(res.body.sections.length).toBe(1);
+            expect(res.body.sections[0].recipes.length).toBe(2);
+            collectionId = res.body.id;
+        });
+
+        it("Should create a collection with recipes only", async () => {
+            const res = await request(app).post("/collections").send({
+                name: "Cocktail Collection",
+                description: "A collection of my favorite cocktails",
+                recipes: [goldRushId, margaritaId],
                 createdBy: "264b106a-7829-4f4a-b286-3a5aee4471e7",
             });
             expect(res.statusCode).toBe(201);
             expect(res.body.recipes.length).toBe(2);
             expect(res.body.sections.length).toBe(0);
+            collectionId = res.body.id;
+        });
+
+        it("Should create a collection with sections only", async () => {
+            const res = await request(app).post("/collections").send({
+                name: "Cocktail Collection",
+                description: "A collection of my favorite cocktails",
+                sections: [
+                    {
+                        name: "Section 1",
+                        description: "A collection of my favorite cocktails",
+                        recipes: [margaritaId, goldRushId],
+                    },
+                    {
+                        name: "Section 2",
+                        recipes: [goldRushId],
+                    }
+                ],
+                createdBy: "264b106a-7829-4f4a-b286-3a5aee4471e7",
+            });
+            expect(res.statusCode).toBe(201);
+            expect(res.body.recipes.length).toBe(0);
+            expect(res.body.sections.length).toBe(2);
+            expect(res.body.sections[0].recipes.length).toBe(2);
+            expect(res.body.sections[1].recipes.length).toBe(1);
             collectionId = res.body.id;
         });
 
@@ -129,7 +175,7 @@ describe("Collection API Tests", () => {
         it("Should get collections by user id", async () => {
             const res = await request(app).get("/collections?userId=264b106a-7829-4f4a-b286-3a5aee4471e7");
             expect(res.statusCode).toBe(200);
-            expect(res.body.length).toBe(1);
+            expect(res.body.length).toBe(3);
         });
 
         it("Should not get collections with an invalid user id", async () => {
