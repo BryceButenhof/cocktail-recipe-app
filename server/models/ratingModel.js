@@ -49,7 +49,6 @@ const RatingSchema = new Schema({
 RatingSchema.methods.toRatingResponse = function(replies) {
     return {
         id: this.id,
-        recipe: this.recipe,
         createdBy: this.createdBy,
         rating: this.rating,
         comment: this.comment,
@@ -63,11 +62,7 @@ const fieldsToPopulate = [
     {
         'path': 'createdBy',
         'select': [ 'id', 'username', 'isDeleted', '-_id']
-    },
-    {
-        'path': 'recipe',
-        'select': [ 'id', 'name', 'isDeleted', '-_id']
-    },
+    }
 ];
 
 RatingSchema.pre(['find', 'findOne', 'findOneAndUpdate'], function() {

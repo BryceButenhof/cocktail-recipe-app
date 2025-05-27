@@ -19,7 +19,7 @@ afterAll(async () => {
     await mongoose.connection.close();
 });
 
-describe("Comment API Tests", () => {
+describe("Rating API Tests", () => {
     let recipeId, ratingId;
 
     beforeAll(async () => {
@@ -91,6 +91,42 @@ describe("Comment API Tests", () => {
             expect(res.body.message).toBe("User with id 194f0e0e-46f0-4a46-9c8c-71ccf25df995 was not found");
         });
     });
+
+    describe("GET /ratings", () => {
+        beforeAll(async () => {
+            const rating = await RatingModel.findOne({id: ratingId});
+            await new CommentModel({
+                rating: rating._id,
+                createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+                comment: "I also think this recipe rocks!"
+            }).save();
+
+            await new CommentModel({
+                rating: rating._id,
+                createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+                comment: "Great recipe, will try again!"
+            }).save();
+        });
+
+        it("Should get all ratings for a recipe successfully", async () => {
+            const res = await request(app).get(`/ratings?recipeId=${recipeId}`);
+            expect(res.statusCode).toBe(200);
+            expect(res.body[0].replies.length).toBe(2);
+        });
+
+        it("Should not get ratings for an invalid recipe id", async () => {
+            const res = await request(app).get("/ratings?recipeId=194f0e0e-46f0-4a46-9c8c-71ccf25df995");
+            expect(res.statusCode).toBe(404);
+            expect(res.body.error).toBe("Recipe with id 194f0e0e-46f0-4a46-9c8c-71ccf25df995 was not found");
+        });
+
+        it("Should not get ratings without recipeId parameter", async () => {
+            const res = await request(app).get("/ratings");
+            expect(res.statusCode).toBe(400);
+            expect(res.body.error).toBe("recipeId parameter is required");
+        });
+    });
+
 
     describe("PATCH /ratings/:id", () => {
         it("Should update a rating successfully", async () => {

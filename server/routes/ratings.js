@@ -22,10 +22,10 @@ router.get('/', async (req, res) => {
         const response = [];
         const ratings = await RatingModel.find({ recipe: recipe._id }).sort({ createdAt: -1 });
         if (ratings && ratings.length > 0) {
-            const comments = await CommentModel.find({ ratingId: { $in: ratings.map(rating => rating.id) } }).sort({ createdAt: -1 });
+            const comments = await CommentModel.find({ rating: { $in: ratings.map(rating => rating._id) } }).sort({ createdAt: -1 });
             for (const rating of ratings) {
-                const replies = comments.filter(comment => comment.ratingId === rating.id);
-                response.push(rating.toRatingResponse(replies));
+                const replies = comments.filter(comment => comment.rating !== rating._id);
+                response.push(rating.toRatingResponse(replies.map(reply => reply.toCommentResponse())));
             }
         } 
         return res.status(200).json(response);
@@ -68,7 +68,7 @@ router.patch('/:id', async (req, res) => {
             { new: true }
         );
 
-        const replies = await CommentModel.find({ ratingId: updatedRating.id }).sort({ createdAt: -1 })
+        const replies = await CommentModel.find({ rating: updatedRating._id }).sort({ createdAt: -1 })
         res.status(200).json(updatedRating.toRatingResponse(replies));
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -84,7 +84,7 @@ router.delete('/:id', async (req, res) => {
         }
 
         await RatingModel.deleteOne({ id: req.params.id });
-        await CommentModel.deleteMany({ ratingId: req.params.id });
+        await CommentModel.deleteMany({ rating: rating._id });
         res.status(200).json({ message: `Rating deleted` });
     } catch (error) {
         res.status(400).json({ message: error.message });

@@ -5,7 +5,7 @@ import express from 'express';
 
 const router = express.Router();
 
-// Cretate a new comment
+// Create a new comment
 router.post('/', async (req, res) => {
     try {
         const user = await UserModel.findOne({ id: req.body.createdBy });

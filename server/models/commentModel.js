@@ -11,7 +11,8 @@ const CommentSchema = new Schema({
         immutable: true
     },
     rating: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ratings',
         required: true,
         immutable: true
     },
@@ -41,7 +42,6 @@ const CommentSchema = new Schema({
 CommentSchema.methods.toCommentResponse = function() {
     return {
         id: this.id,
-        ratingId: this.ratingId,
         createdBy: this.createdBy,
         comment: this.comment,
         createdAt: this.createdAt,
