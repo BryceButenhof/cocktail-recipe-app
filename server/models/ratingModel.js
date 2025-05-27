@@ -8,19 +8,22 @@ const RatingSchema = new Schema({
         default: uuid,
         required: true,
         unique: true,
-        immutable: true
+        immutable: true,
+        index: true
     },
     recipe: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'recipes',
         required: true,
-        immutable: true
+        immutable: true,
+        index: true
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
         required: true,
-        immutable: true
+        immutable: true,
+        index: true
     },
     rating: {
         type: Number,

@@ -10,12 +10,14 @@ const IngredientSchema = new Schema({
         default: uuid,
         required: true,
         unique: true,
-        immutable: true
+        immutable: true,
+        index: true
     },
     name: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        index: true
     },
     description: {
         type: String,
@@ -25,7 +27,8 @@ const IngredientSchema = new Schema({
     type: {
         type: String,
         enum: ingredientTypes,
-        required: true
+        required: true,
+        index: true
     },
     abv: {
         type: Number,
@@ -40,13 +43,15 @@ const IngredientSchema = new Schema({
     isDeleted: {
         type: Boolean,
         default: false,
-        required: true
+        required: true,
+        index: true
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
         required: true,
-        immutable: true
+        immutable: true,
+        index: true
     },
     createdAt: {
         type: Date,

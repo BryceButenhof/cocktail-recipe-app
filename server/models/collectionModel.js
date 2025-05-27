@@ -8,11 +8,13 @@ const CollectionSchema = new Schema({
         default: uuid,
         required: true,
         unique: true,
-        immutable: true
+        immutable: true,
+        index: true
     },
     name: {
         type: String,
         required: true,
+        index: true
     },
     description: {
         type: String,
@@ -28,7 +30,8 @@ const CollectionSchema = new Schema({
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'recipes',
-            required: true
+            required: true,
+            index: true
         }
     ],
     sections: [
@@ -46,7 +49,8 @@ const CollectionSchema = new Schema({
                 {
                     type: mongoose.Schema.Types.ObjectId,
                     ref: 'recipes',
-                    required: true
+                    required: true,
+                    index: true
                 }
             ]
         }
@@ -54,13 +58,15 @@ const CollectionSchema = new Schema({
     isPublic: {
         type: Boolean,
         default: true,
-        required: true
+        required: true,
+        index: true
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
         required: true,
-        immutable: true
+        immutable: true,
+        index: true
     },
     createdAt: {
         type: Date,

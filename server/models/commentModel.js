@@ -8,19 +8,22 @@ const CommentSchema = new Schema({
         default: uuid,
         required: true,
         unique: true,
-        immutable: true
+        immutable: true,
+        index: true
     },
     rating: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ratings',
         required: true,
-        immutable: true
+        immutable: true,
+        index: true
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
         required: true,
-        immutable: true
+        immutable: true,
+        index: true
     },
     comment: {
         type: String,

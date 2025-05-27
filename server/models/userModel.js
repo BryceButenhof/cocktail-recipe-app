@@ -8,17 +8,20 @@ const UserSchema = new Schema({
         default: uuid,
         required: true,
         unique: true,
-        immutable: true
+        immutable: true,
+        index: true
     },
     username: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        index: true
     },
     email: {
         type: String,
         required: true,
         unique: true,
+        index: true
     },
     password: {
         type: String,
@@ -43,7 +46,8 @@ const UserSchema = new Schema({
     isDeleted: {
         type: Boolean,
         default: false,
-        required: true
+        required: true,
+        index: true
     },
     createdAt: {
         type: Date,

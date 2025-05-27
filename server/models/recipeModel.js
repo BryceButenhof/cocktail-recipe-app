@@ -11,17 +11,20 @@ const RecipeSchema = new Schema({
         default: uuid,
         required: true,
         unique: true,
-        immutable: true
+        immutable: true,
+        index: true
     },
     type: {
         type: String,
         enum: recipeTypes,
         default: recipeTypes[0],
-        required: true
+        required: true,
+        index: true
     },
     name: {
         type: String,
         required: true,
+        index: true
     },
     description: {
         type: String,
@@ -77,6 +80,7 @@ const RecipeSchema = new Schema({
             type: String,
             required: false,
             default: [],
+            index: true
         }
     ],
     isSubrecipe: {
@@ -87,18 +91,21 @@ const RecipeSchema = new Schema({
     isPublic: {
         type: Boolean,
         default: true,
-        required: true
+        required: true,
+        index: true
     },
     isDeleted: {
         type: Boolean,
         default: false,
-        required: true
+        required: true,
+        index: true
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
         required: true,
-        immutable: true
+        immutable: true,
+        index: true
     },
     createdAt: {
         type: Date,
