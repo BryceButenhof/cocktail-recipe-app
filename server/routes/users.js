@@ -1,5 +1,8 @@
 import { UserModel } from '../models/userModel.js';
 import express from 'express';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import 'dotenv/config';
 
 const router = express.Router();
 
@@ -36,6 +39,30 @@ router.post('/', async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(400).json(error);
+    }
+});
+
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await UserModel.findOne({ email });
+        if (!user) {
+            return res.status(401).json({ message: `User with email ${email} was not found` });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            return res.status(401).json({ message: 'Invalid password' });
+        }
+
+        const token = jwt.sign(
+            { id: user.id, email: user.email }, 
+            secretKey, 
+            { expiresIn: '1h' }
+        );
+        res.status(200).json({ token });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
     }
 });
 
