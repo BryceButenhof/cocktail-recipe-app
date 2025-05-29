@@ -1,6 +1,7 @@
 import express from 'express';
 import { UserModel } from '../models/userModel.js';
 import { IngredientModel } from '../models/ingredientModel.js';
+import { AuthMiddleware } from '../middleware/auth.js';
 const router = express.Router();
 
 // Get all ingredients
@@ -31,14 +32,9 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new ingredient
-router.post('/', async (req, res) => {
+router.post('/', AuthMiddleware, async (req, res) => {
     try {
-        const userId = await UserModel.findOne({id: req.body.createdBy, isDeleted: false}).select('_id');
-        if (!userId) {
-            return res.status(400).json({ message: `User with id ${req.body.createdBy} was not found` });
-        }
-
-        const ingredient = await new IngredientModel({ ...req.body, createdBy: userId }).save();
+        const ingredient = await new IngredientModel({ ...req.body, createdBy: req.user._id }).save();
         res.status(201).json(ingredient.toIngredientResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -46,37 +42,41 @@ router.post('/', async (req, res) => {
 });
 
 // Update an ingredient
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', AuthMiddleware, async (req, res) => {
     try {
-        const updatedIngredient = await IngredientModel.findOneAndUpdate(
-            { id: req.params.id, isDeleted: false }, 
-            { ...req.body, lastUpdated: Date.now() }, 
-            { new: true }
-        );
+        const ingredient = await IngredientModel.findOne({ id: req.params.id, isDeleted: false });
 
-        if (!updatedIngredient) {
+        if (!ingredient) {
             return res.status(404).json({ message: `Ingredient with id ${req.params.id} was not found` });
         }
 
-        res.status(200).json(updatedIngredient.toIngredientResponse());
+        if (req.user.role !== 'admin' && ingredient.createdBy.id !== req.user.id) {
+            return res.status(403).json({ message: 'You do not have permission to update this ingredient' });
+        }
+
+        ingredient.set({ ...req.body, isDeleted: false, lastUpdated: Date.now() });
+        await ingredient.save();
+        res.status(200).json(ingredient.toIngredientResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 });
 
 // Delete an ingredient
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', AuthMiddleware, async (req, res) => {
     try {
-        const deletedIngredient = await IngredientModel.findOneAndUpdate(
-            { id: req.params.id, isDeleted: false }, 
-            { isDeleted: true, lastUpdated: Date.now() }, 
-            { new: true }
-        ).lean();
+        const ingredient = await IngredientModel.findOne({ id: req.params.id, isDeleted: false });
 
-        if (!deletedIngredient) {
+        if (!ingredient) {
             return res.status(404).json({ message: `Ingredient with id ${req.params.id} was not found` });
         }
 
+        if (req.user.role !== 'admin' && ingredient.createdBy.id !== req.user.id) {
+            return res.status(403).json({ message: 'You do not have permission to delete this ingredient' });
+        }
+
+        ingredient.set({ isDeleted: true, lastUpdated: Date.now() });
+        await ingredient.save();
         res.status(200).json({ message: 'Ingredient deleted' });
     } catch (error) {
         res.status(404).json({ message: error.message });
