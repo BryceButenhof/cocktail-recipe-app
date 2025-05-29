@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import 'dotenv/config';
 
 const router = express.Router();
+const secretKey = process.env.SECRET_KEY;
 
 const toUserResponse = (user) => {
     return {
@@ -33,7 +34,7 @@ router.get('/:id', async (req, res) => {
 // Create a new user
 router.post('/', async (req, res) => {
     try {
-        const user = new UserModel(req.body);
+        const user = new UserModel({...req.body, password: await bcrypt.hash(req.body.password, 12)});
         await user.save();
         res.status(201).json(user);
     } catch (error) {
@@ -56,7 +57,7 @@ router.post('/login', async (req, res) => {
         }
 
         const token = jwt.sign(
-            { _id: user._id, id: user.id, email: user.email },
+            { _id: user._id, id: user.id, role: user.role },
             secretKey, 
             { expiresIn: '1h' }
         );
