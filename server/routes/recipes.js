@@ -62,7 +62,7 @@ const calculateABV = (ingredientDocuments, ingredientsRequest, method) => {
 // Get all recipes
 router.get('/', async (_, res) => {
     try {
-        const recipes = await RecipeModel.find({ isDeleted: false })
+        const recipes = await RecipeModel.find({ isDeleted: false, isPublic: true })
             .collation({ locale: "en" })
             .sort({ name: 1 });
 
@@ -75,25 +75,34 @@ router.get('/', async (_, res) => {
 // Get all recipe previews
 router.get('/preview', async (_, res) => {
     try {
-        const recipes = await RecipeModel.find({ isDeleted: false })
+        const recipes = await RecipeModel.find({ isDeleted: false, isPublic: true })
             .collation({ locale: "en" })
             .sort({ name: 1 });
 
-        res.status(200).json(await Promise.all(recipes.map(recipe => recipe.toPreviewResponse())));
+        res.status(200).json(recipes.map(recipe => recipe.toPreviewResponse()));
     } catch (error) {
         res.status(404).json({ message: error.message });
     }
 });
 
 // Get recipe by id
-router.get('/:id', async (req, res) => {
+router.get('/:id', AuthMiddleware, async (req, res) => {
     try {
         const recipe = await RecipeModel.findOne({ id: req.params.id, isDeleted: false });
-        recipe ? 
-            res.status(200).json(recipe.toRecipeResponse()) : 
-            res.status(404).json({ message: `Recipe with id ${req.params.id} was not found` });
+
+        if (!recipe) {
+            return res.status(404).json({ message: `Recipe with id ${req.params.id} was not found` });
+        }
+
+        if (!recipe.isPublic) {
+            if (!req.user || (req.user.role !== 'admin' && recipe.createdBy.id !== req.user.id)) {
+                return res.status(403).json({ message: 'You are not authorized to view this recipe' });
+            }
+        }
+
+        return res.status(200).json(recipe.toRecipeResponse());
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        return res.status(404).json({ message: error.message });
     }
 });
 

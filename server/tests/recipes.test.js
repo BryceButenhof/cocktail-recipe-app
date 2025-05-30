@@ -191,14 +191,47 @@ describe("Recipe API Tests", () => {
     });
 
     describe("GET /recipes/:id", () => {
-        it("Should get a recipe by id", async () => {
+        it("Should get a public recipe by id without an authorization header", async () => {
             const res = await request(app).get(`/recipes/${recipe1Id}`);
             expect(res.statusCode).toBe(200);
             expect(res.body.id).toBe(recipe1Id);
         });
 
-        it("Should not get a recipe by invalid id", async () => {
-            const res = await request(app).get(`/recipes/${invalidId}`);
+        it("Should get a public recipe by id with an authorization header", async () => {
+            const res = await request(app).get(`/recipes/${recipe1Id}`)
+                .set('Authorization', `Bearer ${user2Token}`);
+            expect(res.statusCode).toBe(200);
+            expect(res.body.id).toBe(recipe1Id);
+        });
+
+        it("Should not get a private recipe by id with an invalid user", async () => {
+            // Make recipe2 private
+            await RecipeModel.findOneAndUpdate({ id: recipe2Id }, { isPublic: false });
+            const res = await request(app).get(`/recipes/${recipe2Id}`)
+                .set('Authorization', `Bearer ${user1Token}`);
+            expect(res.statusCode).toBe(403);
+            expect(res.body.message).toBe("You are not authorized to view this recipe");
+        });
+
+        it("Should get a private recipe by id with a valid user", async () => {
+            const res = await request(app).get(`/recipes/${recipe2Id}`)
+                .set('Authorization', `Bearer ${user2Token}`);
+            expect(res.statusCode).toBe(200);
+            expect(res.body.id).toBe(recipe2Id);
+        });
+
+        it("Should get a private recipe by id as an admin user", async () => {
+            const res = await request(app).get(`/recipes/${recipe2Id}`)
+                .set('Authorization', `Bearer ${adminToken}`);
+            expect(res.statusCode).toBe(200);
+            expect(res.body.id).toBe(recipe2Id);
+            // Make recipe2 public
+            await RecipeModel.findOneAndUpdate({ id: recipe2Id }, { isPublic: true });
+        });
+
+        it("Should not get a recipe by id that does not exist", async () => {
+            const res = await request(app).get(`/recipes/${invalidId}`)
+                .set('Authorization', `Bearer ${user1Token}`);
             expect(res.statusCode).toBe(404);
             expect(res.body.message).toBe(`Recipe with id ${invalidId} was not found`);
         });
