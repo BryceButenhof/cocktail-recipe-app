@@ -26,20 +26,20 @@ describe("Comment API Tests", () => {
         const agaveSyrup = await new IngredientModel({
             name: "agave syrup",
             type: "syrup",
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();
 
         const limeJuice = await new IngredientModel({
             name: "lime juice",
             type: "juice",
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();  
 
         const tequila = await new IngredientModel({
             name: "tequila",
             type: "liquor",     
             abv: 40,
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();
 
         const margarita = await new RecipeModel({
@@ -52,12 +52,12 @@ describe("Comment API Tests", () => {
             ],
             instructions: "Shake with ice and strain into a glass.",
             method: "shaken",
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();
 
         const rating = await new RatingModel({
             recipe: margarita._id,
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
             rating: 5,
             comment: "This recipe rocks!",
         }).save();
@@ -68,7 +68,7 @@ describe("Comment API Tests", () => {
         it("Should create a comment successfully", async () => {
             const res = await request(app).post("/comments").send({
                 rating: ratingId,
-                createdBy: "264b106a-7829-4f4a-b286-3a5aee4471e7",
+                user: "264b106a-7829-4f4a-b286-3a5aee4471e7",
                 comment: "I also think this recipe rocks!",
             });
             expect(res.statusCode).toBe(201);
@@ -78,7 +78,7 @@ describe("Comment API Tests", () => {
         it("Should not create a comment with an invalid rating ID", async () => {
             const res = await request(app).post("/comments").send({
                 rating: "137b9076-d670-46c1-b975-33cc21df2407",
-                createdBy: "264b106a-7829-4f4a-b286-3a5aee4471e7",
+                user: "264b106a-7829-4f4a-b286-3a5aee4471e7",
                 content: "This is a test comment",
             });
             expect(res.statusCode).toBe(400);
@@ -88,7 +88,7 @@ describe("Comment API Tests", () => {
         it("Should not create a comment with an invalid user ID", async () => {
             const res = await request(app).post("/comments").send({
                 rating: ratingId,
-                createdBy: "137b9076-d670-46c1-b975-33cc21df2407",
+                user: "137b9076-d670-46c1-b975-33cc21df2407",
                 content: "This is a test comment",
             });
             expect(res.statusCode).toBe(400);

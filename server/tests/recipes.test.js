@@ -81,14 +81,14 @@ describe("Recipe API Tests", () => {
         const honeySyrup = await new IngredientModel({
             name: "honey syrup",
             type: "syrup",
-            createdBy: user1Id,
+            user: user1Id,
         }).save();
         honeySyrupId = honeySyrup.id;
 
         const lemonJuice = await new IngredientModel({
             name: "lemon juice",
             type: "juice",
-            createdBy: user1Id,
+            user: user1Id,
         }).save();
         lemonJuiceId = lemonJuice.id;
 
@@ -96,14 +96,14 @@ describe("Recipe API Tests", () => {
             name: "whiskey",
             type: "liquor",     
             abv: 40,
-            createdBy: user1Id,
+            user: user1Id,
         }).save();
         whiskeyId = whiskey.id;
 
         const bitters = await new IngredientModel({
             name: "bitters",
             type: "bitters",
-            createdBy: user1Id,
+            user: user1Id,
         }).save();
         bittersId = bitters.id;
     });

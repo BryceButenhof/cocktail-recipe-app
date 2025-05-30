@@ -34,7 +34,7 @@ router.get('/:id', async (req, res) => {
 // Create a new ingredient
 router.post('/', AuthMiddleware, async (req, res) => {
     try {
-        const ingredient = await new IngredientModel({ ...req.body, createdBy: req.user._id }).save();
+        const ingredient = await new IngredientModel({ ...req.body, user: req.user._id }).save();
         res.status(201).json(ingredient.toIngredientResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -50,7 +50,7 @@ router.patch('/:id', AuthMiddleware, async (req, res) => {
             return res.status(404).json({ message: `Ingredient with id ${req.params.id} was not found` });
         }
 
-        if (req.user.role !== 'admin' && ingredient.createdBy.id !== req.user.id) {
+        if (req.user.role !== 'admin' && ingredient.user.id !== req.user.id) {
             return res.status(403).json({ message: 'You do not have permission to update this ingredient' });
         }
 
@@ -71,7 +71,7 @@ router.delete('/:id', AuthMiddleware, async (req, res) => {
             return res.status(404).json({ message: `Ingredient with id ${req.params.id} was not found` });
         }
 
-        if (req.user.role !== 'admin' && ingredient.createdBy.id !== req.user.id) {
+        if (req.user.role !== 'admin' && ingredient.user.id !== req.user.id) {
             return res.status(403).json({ message: 'You do not have permission to delete this ingredient' });
         }
 

@@ -26,20 +26,20 @@ describe("Rating API Tests", () => {
         const agaveSyrup = await new IngredientModel({
             name: "agave syrup",
             type: "syrup",
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();
 
         const limeJuice = await new IngredientModel({
             name: "lime juice",
             type: "juice",
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();  
 
         const tequila = await new IngredientModel({
             name: "tequila",
             type: "liquor",     
             abv: 40,
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();
 
         const margarita = await new RecipeModel({
@@ -52,7 +52,7 @@ describe("Rating API Tests", () => {
             ],
             instructions: "Shake with ice and strain into a glass.",
             method: "shaken",
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();
         recipeId = margarita.id;
     });
@@ -63,7 +63,7 @@ describe("Rating API Tests", () => {
                 recipe: recipeId,
                 rating: 5,
                 comment: "Delicious!",
-                createdBy: "264b106a-7829-4f4a-b286-3a5aee4471e7",
+                user: "264b106a-7829-4f4a-b286-3a5aee4471e7",
             });
             expect(res.statusCode).toBe(201);
             ratingId = res.body.id;
@@ -74,7 +74,7 @@ describe("Rating API Tests", () => {
                 recipe: "194f0e0e-46f0-4a46-9c8c-71ccf25df995",
                 rating: 5,
                 comment: "Delicious!",
-                createdBy: "264b106a-7829-4f4a-b286-3a5aee4471e7",
+                user: "264b106a-7829-4f4a-b286-3a5aee4471e7",
             });
             expect(res.statusCode).toBe(400);
             expect(res.body.message).toBe("Recipe with id 194f0e0e-46f0-4a46-9c8c-71ccf25df995 was not found");
@@ -85,7 +85,7 @@ describe("Rating API Tests", () => {
                 recipe: recipeId,
                 rating: 5,
                 comment: "Delicious!",
-                createdBy: "194f0e0e-46f0-4a46-9c8c-71ccf25df995",
+                user: "194f0e0e-46f0-4a46-9c8c-71ccf25df995",
             });
             expect(res.statusCode).toBe(400);
             expect(res.body.message).toBe("User with id 194f0e0e-46f0-4a46-9c8c-71ccf25df995 was not found");
@@ -97,13 +97,13 @@ describe("Rating API Tests", () => {
             const rating = await RatingModel.findOne({id: ratingId});
             await new CommentModel({
                 rating: rating._id,
-                createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+                user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
                 comment: "I also think this recipe rocks!"
             }).save();
 
             await new CommentModel({
                 rating: rating._id,
-                createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+                user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
                 comment: "Great recipe, will try again!"
             }).save();
         });

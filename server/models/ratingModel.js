@@ -18,7 +18,7 @@ const RatingSchema = new Schema({
         immutable: true,
         index: true
     },
-    createdBy: {
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
         required: true,
@@ -52,7 +52,7 @@ const RatingSchema = new Schema({
 RatingSchema.methods.toRatingResponse = function(replies) {
     return {
         id: this.id,
-        createdBy: this.createdBy,
+        user: this.user,
         rating: this.rating,
         comment: this.comment,
         replies: replies || [],
@@ -63,7 +63,7 @@ RatingSchema.methods.toRatingResponse = function(replies) {
 
 const fieldsToPopulate = [
     {
-        'path': 'createdBy',
+        'path': 'user',
         'select': [ 'id', 'username', 'isDeleted', '-_id']
     }
 ];

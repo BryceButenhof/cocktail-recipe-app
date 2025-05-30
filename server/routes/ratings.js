@@ -37,9 +37,9 @@ router.get('/', async (req, res) => {
 // Create a new rating
 router.post('/', async (req, res) => {
     try {
-        const user = await UserModel.findOne({ id: req.body.createdBy });
+        const user = await UserModel.findOne({ id: req.body.user });
         if (!user || user.isDeleted) {
-            return res.status(400).json({ message: `User with id ${req.body.createdBy} was not found` });
+            return res.status(400).json({ message: `User with id ${req.body.user} was not found` });
         }
 
         const recipe = await RecipeModel.findOne({ id: req.body.recipe, isDeleted: false });
@@ -47,7 +47,7 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ message: `Recipe with id ${req.body.recipe} was not found` });
         }
 
-        const rating = await new RatingModel({ ...req.body, recipe: recipe._id, createdBy: user._id }).save();
+        const rating = await new RatingModel({ ...req.body, recipe: recipe._id, user: user._id }).save();
         res.status(201).json(rating.toRatingResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });

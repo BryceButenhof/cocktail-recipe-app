@@ -46,7 +46,7 @@ const IngredientSchema = new Schema({
         required: true,
         index: true
     },
-    createdBy: {
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
         required: true,
@@ -68,7 +68,7 @@ const IngredientSchema = new Schema({
 
 const fieldsToPopulate = [
     {
-        'path': 'createdBy',
+        'path': 'user',
         'select': ['id', 'username', 'isDeleted', '-_id']
     }
 ];
@@ -81,7 +81,7 @@ const fieldsToSelect = [
     'type',
     'abv',
     'imageUrl',
-    'createdBy',
+    'user',
     'isDeleted',
     'createdAt',
     'lastUpdated'
@@ -95,7 +95,7 @@ IngredientSchema.methods.toIngredientResponse = function() {
         type: this.type,
         abv: this.abv,
         imageUrl: this.imageUrl,
-        createdBy: this.createdBy,
+        user: this.user,
         isDeleted: this.isDeleted,
         createdAt: this.createdAt,
         lastUpdated: this.lastUpdated

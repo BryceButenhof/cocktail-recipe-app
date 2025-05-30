@@ -24,39 +24,39 @@ describe("Collection API Tests", () => {
         const honeySyrup = await new IngredientModel({
             name: "honey syrup",
             type: "syrup",
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();
 
         const lemonJuice = await new IngredientModel({
             name: "lemon juice",
             type: "juice",
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();
 
         const whiskey = await new IngredientModel({
             name: "whiskey",
             type: "liquor",     
             abv: 40,
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();
 
         const agaveSyrup = await new IngredientModel({
             name: "agave syrup",
             type: "syrup",
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();
 
         const limeJuice = await new IngredientModel({
             name: "lime juice",
             type: "juice",
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();  
 
         const tequila = await new IngredientModel({
             name: "tequila",
             type: "liquor",     
             abv: 40,
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();
 
         const goldRush = await new RecipeModel({
@@ -69,7 +69,7 @@ describe("Collection API Tests", () => {
             ],
             instructions: "Shake with ice and strain into a glass.",
             method: "shaken",
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();
         goldRushId = goldRush.id;
 
@@ -83,7 +83,7 @@ describe("Collection API Tests", () => {
             ],
             instructions: "Shake with ice and strain into a glass.",
             method: "shaken",
-            createdBy: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
+            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
         }).save();
         margaritaId = margarita.id;
     });
@@ -101,7 +101,7 @@ describe("Collection API Tests", () => {
                         recipes: [margaritaId, goldRushId],
                     },
                 ],
-                createdBy: "264b106a-7829-4f4a-b286-3a5aee4471e7",
+                user: "264b106a-7829-4f4a-b286-3a5aee4471e7",
             });
             expect(res.statusCode).toBe(201);
             expect(res.body.recipes.length).toBe(2);
@@ -115,7 +115,7 @@ describe("Collection API Tests", () => {
                 name: "Cocktail Collection",
                 description: "A collection of my favorite cocktails",
                 recipes: [goldRushId, margaritaId],
-                createdBy: "264b106a-7829-4f4a-b286-3a5aee4471e7",
+                user: "264b106a-7829-4f4a-b286-3a5aee4471e7",
             });
             expect(res.statusCode).toBe(201);
             expect(res.body.recipes.length).toBe(2);
@@ -138,7 +138,7 @@ describe("Collection API Tests", () => {
                         recipes: [goldRushId],
                     }
                 ],
-                createdBy: "264b106a-7829-4f4a-b286-3a5aee4471e7",
+                user: "264b106a-7829-4f4a-b286-3a5aee4471e7",
             });
             expect(res.statusCode).toBe(201);
             expect(res.body.recipes.length).toBe(0);
@@ -153,7 +153,7 @@ describe("Collection API Tests", () => {
                 name: "Cocktail Collection",
                 description: "A collection of my favorite cocktails",
                 recipes: [goldRushId, "76dbe06b-3beb-4336-a6ba-152b301af49e"],
-                createdBy: "264b106a-7829-4f4a-b286-3a5aee4471e7",
+                user: "264b106a-7829-4f4a-b286-3a5aee4471e7",
             });
             expect(res.statusCode).toBe(400);
             expect(res.body.message).toBe("Recipe with id 76dbe06b-3beb-4336-a6ba-152b301af49e was not found");
@@ -164,7 +164,7 @@ describe("Collection API Tests", () => {
                 name: "Cocktail Collection",
                 description: "A collection of my favorite cocktails",
                 recipes: [goldRushId, margaritaId],
-                createdBy: "dd59f65e-6944-4ffe-af62-385943b8734e",
+                user: "dd59f65e-6944-4ffe-af62-385943b8734e",
             });
             expect(res.statusCode).toBe(400);
             expect(res.body.message).toBe("User with id dd59f65e-6944-4ffe-af62-385943b8734e was not found");

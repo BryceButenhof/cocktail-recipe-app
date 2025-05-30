@@ -8,9 +8,9 @@ const router = express.Router();
 // Create a new comment
 router.post('/', async (req, res) => {
     try {
-        const user = await UserModel.findOne({ id: req.body.createdBy });
+        const user = await UserModel.findOne({ id: req.body.user });
         if (!user || user.isDeleted) {
-            return res.status(400).json({ message: `User with id ${req.body.createdBy} was not found` });
+            return res.status(400).json({ message: `User with id ${req.body.user} was not found` });
         }
 
         const rating = await RatingModel.findOne({ id: req.body.rating });
@@ -18,7 +18,7 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ message: `Rating with id ${req.body.rating} was not found` });
         }
 
-        const comment = await new CommentModel({ ...req.body, createdBy: user._id, rating: rating._id }).save();
+        const comment = await new CommentModel({ ...req.body, user: user._id, rating: rating._id }).save();
         res.status(201).json(comment.toCommentResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });

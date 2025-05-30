@@ -73,7 +73,7 @@ router.get('/', async (req, res) => {
             return res.status(400).json({ message: `User with id ${req.query.userId} was not found` });
         }
         
-        const collections = await CollectionModel.find({ createdBy: userId });
+        const collections = await CollectionModel.find({ user: userId });
         res.status(200).json(collections.map(collection => collection.toCollectionResponse()));
     } catch (error) {
         res.status(404).json({ message: error.message });
@@ -83,15 +83,15 @@ router.get('/', async (req, res) => {
 // Create a new collection
 router.post('/', async (req, res) => {
     try {
-        const userId = await UserModel.findOne({id: req.body.createdBy, isDeleted: false}).select('_id');
+        const userId = await UserModel.findOne({id: req.body.user, isDeleted: false}).select('_id');
         if (!userId) {
-            return res.status(400).json({ message: `User with id ${req.body.createdBy} was not found` });
+            return res.status(400).json({ message: `User with id ${req.body.user} was not found` });
         }
 
         const recipeDocuments = await findReferencedRecipes(req);
         const recipes = formatAndValidateRecipes(recipeDocuments, req.body.recipes);
         const sections = formatAndValidateSections(recipeDocuments, req.body.sections);
-        const collection = await new CollectionModel({ ...req.body, recipes, sections, createdBy: userId }).save();
+        const collection = await new CollectionModel({ ...req.body, recipes, sections, user: userId }).save();
         res.status(201).json(collection.toCollectionResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });

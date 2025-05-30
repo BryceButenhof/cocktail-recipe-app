@@ -95,7 +95,7 @@ router.get('/:id', AuthMiddleware, async (req, res) => {
         }
 
         if (!recipe.isPublic) {
-            if (!req.user || (req.user.role !== 'admin' && recipe.createdBy.id !== req.user.id)) {
+            if (!req.user || (req.user.role !== 'admin' && recipe.user.id !== req.user.id)) {
                 return res.status(403).json({ message: 'You are not authorized to view this recipe' });
             }
         }
@@ -112,7 +112,7 @@ router.post('/', AuthMiddleware, async (req, res) => {
         const ingredientDocuments = await getAndValidateIngredients(req.body.ingredients);
         const formattedIngredients = formatIngredients(ingredientDocuments, req.body.ingredients);
         const abv = calculateABV(ingredientDocuments, req.body.ingredients, req.body.method);
-        const recipe = await new RecipeModel({ ...req.body, createdBy: req.user._id, ingredients: formattedIngredients, abv}).save();
+        const recipe = await new RecipeModel({ ...req.body, user: req.user._id, ingredients: formattedIngredients, abv}).save();
         res.status(201).json(recipe.toRecipeResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -127,7 +127,7 @@ router.patch('/:id', AuthMiddleware, async (req, res) => {
             return res.status(404).json({ message: `Recipe with id ${req.params.id} was not found` });
         }
 
-        if (req.user.role !== 'admin' && recipe.createdBy.id !== req.user.id) {
+        if (req.user.role !== 'admin' && recipe.user.id !== req.user.id) {
             return res.status(403).json({ message: 'You do not have permission to update this recipe' });
         }
 
@@ -159,7 +159,7 @@ router.delete('/:id', AuthMiddleware, async (req, res) => {
             return res.status(404).json({ message: `Recipe with id ${req.params.id} was not found` });
         }
 
-        if (req.user.role !== 'admin' && recipe.createdBy.id !== req.user.id) {
+        if (req.user.role !== 'admin' && recipe.user.id !== req.user.id) {
             return res.status(403).json({ message: 'You do not have permission to delete this recipe' });
         }
 

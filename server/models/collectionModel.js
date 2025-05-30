@@ -61,7 +61,7 @@ const CollectionSchema = new Schema({
         required: true,
         index: true
     },
-    createdBy: {
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
         required: true,
@@ -94,7 +94,7 @@ CollectionSchema.methods.toCollectionResponse = function() {
             recipes: section.recipes.map(recipe => recipe.toPreviewResponse())
         })),
         isPublic: this.isPublic,
-        createdBy: this.createdBy,
+        user: this.user,
         createdAt: this.createdAt,
         lastUpdated: this.lastUpdated
     };

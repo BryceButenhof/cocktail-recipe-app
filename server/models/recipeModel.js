@@ -100,7 +100,7 @@ const RecipeSchema = new Schema({
         required: true,
         index: true
     },
-    createdBy: {
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
         required: true,
@@ -143,7 +143,7 @@ RecipeSchema.methods.toRecipeResponse = function() {
         isSubRecipe: this.isSubRecipe,
         isPublic: this.isPublic,
         isDeleted: this.isDeleted,
-        createdBy: this.createdBy,
+        user: this.user,
         createdAt: this.createdAt,
         lastUpdated: this.lastUpdated
     };
@@ -160,13 +160,13 @@ RecipeSchema.methods.toPreviewResponse = function() {
         tags: this.tags,
         isPublic: this.isPublic,
         isDeleted: this.isDeleted,
-        createdBy: this.createdBy
+        user: this.user
     };
 };
 
 const fieldsToPopulate = [
     {
-        'path': 'createdBy',
+        'path': 'user',
         'select': [ 'id', 'username', 'isDeleted', '-_id']
     },
     {

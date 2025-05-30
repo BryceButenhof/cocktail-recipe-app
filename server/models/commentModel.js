@@ -18,7 +18,7 @@ const CommentSchema = new Schema({
         immutable: true,
         index: true
     },
-    createdBy: {
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
         required: true,
@@ -45,7 +45,7 @@ const CommentSchema = new Schema({
 CommentSchema.methods.toCommentResponse = function() {
     return {
         id: this.id,
-        createdBy: this.createdBy,
+        user: this.user,
         comment: this.comment,
         createdAt: this.createdAt,
         lastUpdated: this.lastUpdated
@@ -54,7 +54,7 @@ CommentSchema.methods.toCommentResponse = function() {
 
 const fieldsToPopulate = [
     {
-        'path': 'createdBy',
+        'path': 'user',
         'select': [ 'id', 'username', 'isDeleted', '-_id']
     }
 ];
