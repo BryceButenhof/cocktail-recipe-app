@@ -2,6 +2,7 @@ import express from 'express';
 import { CollectionModel } from '../models/collectionModel.js';
 import { UserModel } from '../models/userModel.js';
 import { RecipeModel } from '../models/recipeModel.js';
+import { AuthMiddleware } from '../middleware/auth.js';
 const router = express.Router();
 
 const findReferencedRecipes = async (req) => {
@@ -50,18 +51,28 @@ const formatAndValidateSections = (recipeDocuments, sections) => {
 }
 
 // Get collection by id
-router.get('/:id', async (req, res) => {
+router.get('/:id', AuthMiddleware, async (req, res) => {
     try {
         const collection = await CollectionModel.findOne({ id: req.params.id });
-        collection ? 
-            res.status(200).json(collection.toCollectionResponse()) : 
-            res.status(404).json({ message: `Collection with id ${req.params.id} was not found` });
+        if (!collection) {
+            return res.status(404).json({ message: `Collection with id ${req.params.id} was not found` });
+        }
+
+        if (!collection.isPublic) {
+            if (!req.user || (req.user.role !== 'admin' && collection.user.id !== req.user.id)) {
+                return res.status(403).json({ message: 'You are not authorized to view this collection' });
+            }
+        }
+        
+        return res.status(200).json(collection.toCollectionResponse());
     } catch (error) {
         res.status(404).json({ message: error.message });
     }
 });
 
+//TODO revisit this endpoint
 // Get collections by user id
+/*
 router.get('/', async (req, res) => {
     try {
         if (!req.query.userId) {
@@ -79,54 +90,69 @@ router.get('/', async (req, res) => {
         res.status(404).json({ message: error.message });
     }
 });
+*/
 
 // Create a new collection
-router.post('/', async (req, res) => {
+router.post('/', AuthMiddleware, async (req, res) => {
     try {
-        const userId = await UserModel.findOne({id: req.body.user, isDeleted: false}).select('_id');
-        if (!userId) {
-            return res.status(400).json({ message: `User with id ${req.body.user} was not found` });
-        }
-
         const recipeDocuments = await findReferencedRecipes(req);
         const recipes = formatAndValidateRecipes(recipeDocuments, req.body.recipes);
         const sections = formatAndValidateSections(recipeDocuments, req.body.sections);
-        const collection = await new CollectionModel({ ...req.body, recipes, sections, user: userId }).save();
+        const collection = await new CollectionModel({ ...req.body, recipes, sections, user: req.user._id }).save();
         res.status(201).json(collection.toCollectionResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 });
 
-// Replace a collection by id
-router.put('/:id', async (req, res) => {
+// Update a collection by id
+router.patch('/:id', AuthMiddleware, async (req, res) => {
     try {
         const collection = await CollectionModel.findOne({ id: req.params.id });
         if (!collection) {
             return res.status(404).json({ message: `Collection with id ${req.params.id} was not found` });
         }
 
-        const recipeDocuments = await findReferencedRecipes(req);
-        const recipes = formatAndValidateRecipes(recipeDocuments, req.body.recipes);
-        const sections = formatAndValidateSections(recipeDocuments, req.body.sections);
-        const updatedCollection = await CollectionModel.findOneAndUpdate(
-            { id: req.params.id },
-            { ...req.body, recipes, sections, lastUpdated: Date.now() },
-            { new: true }
-        );
-        res.status(200).json(updatedCollection.toCollectionResponse());
+        if (req.user.role !== 'admin' && collection.user.id !== req.user.id) {
+            return res.status(403).json({ message: 'You are not authorized to update this collection' });
+        }
+
+        let fieldsToUpdate = { ...req.body };
+        if (req.body.recipes || req.body.sections) {
+            const recipeDocuments = await findReferencedRecipes(req);
+            if (req.body.recipes) {
+                fieldsToUpdate.recipes = formatAndValidateRecipes(recipeDocuments, req.body.recipes);
+            }
+
+            if (req.body.sections) {
+                fieldsToUpdate.sections = formatAndValidateSections(recipeDocuments, req.body.sections);
+            }
+        }
+
+        collection.set({
+            ...fieldsToUpdate,
+            lastUpdated: Date.now()
+        });
+        await collection.save();
+        res.status(200).json(collection.toCollectionResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 });
 
 // Delete a collection by id
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', AuthMiddleware, async (req, res) => {
     try {
-        const result = await CollectionModel.deleteOne({ id: req.params.id });
-        if (result.deletedCount === 0) {
+        const collection = await CollectionModel.findOne({ id: req.params.id });
+        if (!collection) {
             return res.status(404).json({ message: `Collection with id ${req.params.id} was not found` });
         }
+
+        if (req.user.role !== 'admin' && collection.user.id !== req.user.id) {
+            return res.status(403).json({ message: 'You are not authorized to delete this collection' });
+        }
+
+        await collection.deleteOne();
         res.status(200).json({ message: 'Collection deleted' });
     } catch (error) {
         res.status(400).json({ message: error.message });

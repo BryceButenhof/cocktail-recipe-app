@@ -61,6 +61,11 @@ const CollectionSchema = new Schema({
         required: true,
         index: true
     },
+    isMenu: {
+        type: Boolean,
+        default: false,
+        required: true
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
@@ -94,6 +99,7 @@ CollectionSchema.methods.toCollectionResponse = function() {
             recipes: section.recipes.map(recipe => recipe.toPreviewResponse())
         })),
         isPublic: this.isPublic,
+        isMenu: this.isMenu,
         user: this.user,
         createdAt: this.createdAt,
         lastUpdated: this.lastUpdated
@@ -106,6 +112,10 @@ const fieldsToPopulate = [
     },
     {
         'path': 'sections.recipes'
+    },
+    {
+        'path': 'user',
+        'select': [ 'id', 'username', 'isDeleted', '-_id']
     }
 ];
 
