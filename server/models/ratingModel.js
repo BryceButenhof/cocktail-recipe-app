@@ -62,17 +62,23 @@ const RatingSchema = new Schema({
     }
 });
 
-RatingSchema.methods.toRatingResponse = function() {
-    return {
+RatingSchema.methods.toRatingResponse = function(showRefs) {
+    const result = {
         id: this.id,
         user: this.user,
         rating: this.rating,
         comment: this.comment,
-        replies: this.replies,
         isEdited: this.isEdited,
         createdAt: this.createdAt,
         lastUpdated: this.lastUpdated
     };
+
+    if (showRefs) {
+        result.parent = this.parent
+        result.replies = this.replies;
+    }
+
+    return result;
 }
 
 const fieldsToPopulate = [

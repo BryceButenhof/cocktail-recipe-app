@@ -130,6 +130,8 @@ describe("Rating API Tests", () => {
                 })
                 .set('Authorization', `Bearer ${user1Token}`);
             expect(res1.statusCode).toBe(201);
+            expect(res1.body.replies).toBe(undefined);
+            expect(res1.body.parent).toBe(undefined);
             rating1Id = res1.body.id;
 
             const res2 = await request(app).post("/ratings")
@@ -140,6 +142,8 @@ describe("Rating API Tests", () => {
                 })
                 .set('Authorization', `Bearer ${user2Token}`);
             expect(res2.statusCode).toBe(201);
+            expect(res2.body.replies).toBe(undefined);
+            expect(res2.body.parent).toBe(undefined);
             rating2Id = res2.body.id;
         });
 
@@ -153,6 +157,22 @@ describe("Rating API Tests", () => {
                 .set('Authorization', `Bearer ${user1Token}`);
             expect(res.statusCode).toBe(400);
             expect(res.body.message).toBe(`Recipe with id ${invalidId} was not found`);
+        });
+    });
+
+    describe("GET /ratings/:id", () => {
+        it("Should get a rating by id", async () => {
+            const res = await request(app).get(`/ratings/${rating1Id}`);
+            expect(res.statusCode).toBe(200);
+            expect(res.body.rating).toBe(5);
+            expect(res.body.parent.id).toBe(margaritaId);
+            expect(res.body.replies.length).toBe(0);
+        });
+
+        it("Should not get a rating that does not exist", async () => {
+            const res = await request(app).get(`/ratings/${invalidId}`);
+            expect(res.statusCode).toBe(404);
+            expect(res.body.message).toBe(`Rating with id ${invalidId} was not found`);
         });
     });
 
@@ -187,6 +207,8 @@ describe("Rating API Tests", () => {
             expect(res.statusCode).toBe(200);
             expect(res.body.rating).toBe(4);
             expect(res.body.comment).toBe("Good, but could be better.");
+            expect(res.body.replies).toBe(undefined);
+            expect(res.body.parent).toBe(undefined);
         }); 
 
         it("Should not update a rating with an invalid user", async () => {
