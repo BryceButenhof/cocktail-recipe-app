@@ -5,160 +5,241 @@ import 'dotenv/config';
 import { RecipeModel } from '../models/recipeModel.js';
 import { IngredientModel } from '../models/ingredientModel.js';
 import { RatingModel } from '../models/ratingModel.js';
-import { CommentModel } from '../models/commentModel.js';
+import { UserModel } from '../models/userModel.js';
+import { v4 as uuid } from 'uuid';
+
+const invalidId = uuid();
+let adminToken,
+    user1Token,
+    user2Token;
 
 beforeAll(async () => {
     await mongoose.connect(process.env.ATLAS_TEST_URI);
+
+    //Create users
+    await request(app).post("/users").send({
+        'email': 'admin@admin.com',
+        'username': 'adminUser',
+        'password': 'adminPassword',
+        "role": "admin",
+    });
+
+    await request(app).post("/users").send({
+        'email': 'user1@user.com',
+        'username': 'user1',
+        'password': 'user1Password',
+        "role": "user",
+    });
+
+    await request(app).post("/users").send({
+        'email': 'user2@user.com',
+        'username': 'user2',
+        'password': 'user2Password',
+        "role": "user",
+    });
+
+    //Login users
+    const adminRes = await request(app).post("/users/login").send({
+        'email': 'admin@admin.com',
+        "password": 'adminPassword'
+    });
+    adminToken = adminRes.body.token;
+
+    const user1Res = await request(app).post("/users/login").send({
+        'email': 'user1@user.com',
+        "password": 'user1Password'
+    });
+    user1Token = user1Res.body.token;
+
+    const user2Res = await request(app).post("/users/login").send({
+        'email': 'user2@user.com',
+        "password": 'user2Password'
+    });
+    user2Token = user2Res.body.token;
 });
 
 afterAll(async () => {
+    await UserModel.deleteMany({username: {$in: ['adminUser', 'user1', 'user2']}});
     await RatingModel.deleteMany({});
-    await CommentModel.deleteMany({});
     await RecipeModel.deleteMany({});
     await IngredientModel.deleteMany({});
     await mongoose.connection.close();
 });
 
 describe("Rating API Tests", () => {
-    let recipeId, ratingId;
+    let margaritaId, 
+        rating1Id,
+        rating2Id,
+        user1Id;
 
     beforeAll(async () => {
-        const agaveSyrup = await new IngredientModel({
-            name: "agave syrup",
-            type: "syrup",
-            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
-        }).save();
-
-        const limeJuice = await new IngredientModel({
-            name: "lime juice",
-            type: "juice",
-            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
-        }).save();  
-
-        const tequila = await new IngredientModel({
-            name: "tequila",
-            type: "liquor",     
-            abv: 40,
-            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
-        }).save();
-
-        const margarita = await new RecipeModel({
-            name: "Margarita",
-            description: "A classic cocktail made with tequila and lime juice",
-            ingredients: [
-                { id: agaveSyrup._id, quantity: 0.5, unit: "oz" },
-                { id: limeJuice._id, quantity: 1, unit: "oz" },
-                { id: tequila._id, quantity: 2, unit: "oz" },
-            ],
-            instructions: "Shake with ice and strain into a glass.",
-            method: "shaken",
-            user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
-        }).save();
-        recipeId = margarita.id;
-    });
+            const user1 = await UserModel.findOne({ username: 'user1' });
+            user1Id = user1._id;
+    
+            const agaveSyrup = await new IngredientModel({
+                name: "agave syrup",
+                type: "syrup",
+                user: user1Id,
+            }).save();
+    
+            const limeJuice = await new IngredientModel({
+                name: "lime juice",
+                type: "juice",
+                user: user1Id,
+            }).save();  
+    
+            const tequila = await new IngredientModel({
+                name: "tequila",
+                type: "liquor",     
+                abv: 40,
+                user: user1Id,
+            }).save();
+    
+            const margarita = await new RecipeModel({
+                name: "Margarita",
+                description: "A classic cocktail made with tequila and lime juice",
+                ingredients: [
+                    { id: agaveSyrup._id, quantity: 0.5, unit: "oz" },
+                    { id: limeJuice._id, quantity: 1, unit: "oz" },
+                    { id: tequila._id, quantity: 2, unit: "oz" },
+                ],
+                instructions: "Shake with ice and strain into a glass.",
+                method: "shaken",
+                user: user1Id,
+            }).save();
+            margaritaId = margarita.id;
+        });
 
     describe("POST /ratings", () => {
+        it("Should not create a rating without an authorization header", async () => {
+            const res1 = await request(app).post("/ratings")
+                .send({
+                    parent: margaritaId,
+                    rating: 5,
+                    comment: "Delicious!",
+                });
+            expect(res1.statusCode).toBe(401);
+        });
+
         it("Should create a rating successfully", async () => {
-            const res = await request(app).post("/ratings").send({
-                recipe: recipeId,
-                rating: 5,
-                comment: "Delicious!",
-                user: "264b106a-7829-4f4a-b286-3a5aee4471e7",
-            });
-            expect(res.statusCode).toBe(201);
-            ratingId = res.body.id;
+            const res1 = await request(app).post("/ratings")
+                .send({
+                    parent: margaritaId,
+                    rating: 5,
+                    comment: "Delicious!",
+                })
+                .set('Authorization', `Bearer ${user1Token}`);
+            expect(res1.statusCode).toBe(201);
+            rating1Id = res1.body.id;
+
+            const res2 = await request(app).post("/ratings")
+                .send({
+                    parent: margaritaId,
+                    rating: 5,
+                    comment: "Delicious!",
+                })
+                .set('Authorization', `Bearer ${user2Token}`);
+            expect(res2.statusCode).toBe(201);
+            rating2Id = res2.body.id;
         });
 
         it("Should not create a rating with an invalid recipe id", async () => {
-            const res = await request(app).post("/ratings").send({
-                recipe: "194f0e0e-46f0-4a46-9c8c-71ccf25df995",
-                rating: 5,
-                comment: "Delicious!",
-                user: "264b106a-7829-4f4a-b286-3a5aee4471e7",
-            });
+            const res = await request(app).post("/ratings")
+                .send({
+                    parent: invalidId,
+                    rating: 5,
+                    comment: "Delicious!",
+                })
+                .set('Authorization', `Bearer ${user1Token}`);
             expect(res.statusCode).toBe(400);
-            expect(res.body.message).toBe("Recipe with id 194f0e0e-46f0-4a46-9c8c-71ccf25df995 was not found");
-        });
-
-        it("Should not create a rating with an invalid user id", async () => {
-            const res = await request(app).post("/ratings").send({
-                recipe: recipeId,
-                rating: 5,
-                comment: "Delicious!",
-                user: "194f0e0e-46f0-4a46-9c8c-71ccf25df995",
-            });
-            expect(res.statusCode).toBe(400);
-            expect(res.body.message).toBe("User with id 194f0e0e-46f0-4a46-9c8c-71ccf25df995 was not found");
+            expect(res.body.message).toBe(`Recipe with id ${invalidId} was not found`);
         });
     });
-
-    describe("GET /ratings", () => {
-        beforeAll(async () => {
-            const rating = await RatingModel.findOne({id: ratingId});
-            await new CommentModel({
-                rating: rating._id,
-                user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
-                comment: "I also think this recipe rocks!"
-            }).save();
-
-            await new CommentModel({
-                rating: rating._id,
-                user: new mongoose.Types.ObjectId('681e4c7c17842c19255e7a2a'),
-                comment: "Great recipe, will try again!"
-            }).save();
-        });
-
-        it("Should get all ratings for a recipe successfully", async () => {
-            const res = await request(app).get(`/ratings?recipeId=${recipeId}`);
-            expect(res.statusCode).toBe(200);
-            expect(res.body[0].replies.length).toBe(2);
-        });
-
-        it("Should not get ratings for an invalid recipe id", async () => {
-            const res = await request(app).get("/ratings?recipeId=194f0e0e-46f0-4a46-9c8c-71ccf25df995");
-            expect(res.statusCode).toBe(404);
-            expect(res.body.error).toBe("Recipe with id 194f0e0e-46f0-4a46-9c8c-71ccf25df995 was not found");
-        });
-
-        it("Should not get ratings without recipeId parameter", async () => {
-            const res = await request(app).get("/ratings");
-            expect(res.statusCode).toBe(400);
-            expect(res.body.error).toBe("recipeId parameter is required");
-        });
-    });
-
 
     describe("PATCH /ratings/:id", () => {
-        it("Should update a rating successfully", async () => {
-            const res = await request(app).patch(`/ratings/${ratingId}`).send({
-                rating: 4,
-                comment: "Good, but could be better.",
-            });
-            expect(res.statusCode).toBe(200);
-            expect(res.body.rating).toBe(4);
+        it("Should not update a rating without an authorization header", async () => {
+            const res = await request(app).patch(`/ratings/${rating1Id}`)
+                .send({
+                    rating: 4,
+                    comment: "Good, but could be better.",
+                });
+            expect(res.statusCode).toBe(401);
         });
 
-        it("Should not update a rating with an invalid id", async () => {
-            const res = await request(app).patch("/ratings/194f0e0e-46f0-4a46-9c8c-71ccf25df995").send({
-                rating: 4,
-                comment: "Good, but could be better.",
-            });
+        it("Should not update a rating that does not exist", async () => {
+            const res = await request(app).patch(`/ratings/${invalidId}`)
+                .send({
+                    rating: 4,
+                    comment: "Good, but could be better.",
+                })
+                .set('Authorization', `Bearer ${user1Token}`);
             expect(res.statusCode).toBe(404);
-            expect(res.body.message).toBe("Rating with id 194f0e0e-46f0-4a46-9c8c-71ccf25df995 was not found");
-        });
+            expect(res.body.message).toBe(`Rating with id ${invalidId} was not found`);
+        }); 
+
+        it("Should update a rating as a valid user", async () => {
+            const res = await request(app).patch(`/ratings/${rating1Id}`)
+                .send({
+                    rating: 4,
+                    comment: "Good, but could be better.",
+                })
+                .set('Authorization', `Bearer ${user1Token}`);
+            expect(res.statusCode).toBe(200);
+            expect(res.body.rating).toBe(4);
+            expect(res.body.comment).toBe("Good, but could be better.");
+        }); 
+
+        it("Should not update a rating with an invalid user", async () => {
+            const res = await request(app).patch(`/ratings/${rating1Id}`)
+                .send({
+                    rating: 4,
+                    comment: "Good, but could be better.",
+                })
+                .set('Authorization', `Bearer ${user2Token}`);
+            expect(res.statusCode).toBe(403);
+            expect(res.body.message).toBe('You do not have permission to update this rating');
+        }); 
     });
 
     describe("DELETE /ratings/:id", () => {
-        it("Should delete a rating successfully", async () => {
-            const res = await request(app).delete(`/ratings/${ratingId}`);
+        it("Should not delete a rating without an authorization header", async () => {
+            const res = await request(app).delete(`/ratings/${rating1Id}`);
+            expect(res.statusCode).toBe(401);
+        });
+
+        it("Should not delete a rating that does not exist", async () => {
+            const res = await request(app).delete(`/ratings/${invalidId}`)
+                .set('Authorization', `Bearer ${user1Token}`);
+            expect(res.statusCode).toBe(404);
+            expect(res.body.message).toBe(`Rating with id ${invalidId} was not found`);
+        });
+
+        it("Should not delete a rating with an invalid user", async () => {
+            const res = await request(app).delete(`/ratings/${rating1Id}`)
+                .set('Authorization', `Bearer ${user2Token}`);
+            expect(res.statusCode).toBe(403);
+            expect(res.body.message).toBe("You do not have permission to delete this rating");
+        });
+
+        it("Should delete a rating with a valid user", async () => {
+            const res = await request(app).delete(`/ratings/${rating1Id}`)
+                .set('Authorization', `Bearer ${user1Token}`);
             expect(res.statusCode).toBe(200);
             expect(res.body.message).toBe("Rating deleted");
         });
 
-        it("Should not delete a rating with an invalid id", async () => {
-            const res = await request(app).delete("/ratings/194f0e0e-46f0-4a46-9c8c-71ccf25df995");
+        it("Should not delete a rating that has already been deleted", async () => {
+            const res = await request(app).delete(`/ratings/${rating1Id}`)
+                .set('Authorization', `Bearer ${user1Token}`);
             expect(res.statusCode).toBe(404);
-            expect(res.body.message).toBe("Rating with id 194f0e0e-46f0-4a46-9c8c-71ccf25df995 was not found");
+            expect(res.body.message).toBe(`Rating with id ${rating1Id} was not found`);
+        });
+
+        it("Should delete a rating with as an admin user", async () => {
+            const res = await request(app).delete(`/ratings/${rating2Id}`)
+                .set('Authorization', `Bearer ${adminToken}`);
+            expect(res.statusCode).toBe(200);
+            expect(res.body.message).toBe("Rating deleted");
         });
     });
 });

@@ -2,10 +2,11 @@ import { RecipeModel } from '../models/recipeModel.js';
 import { RatingModel } from '../models/ratingModel.js';
 import { UserModel } from '../models/userModel.js';
 import { CommentModel } from '../models/commentModel.js';
+import { AuthMiddleware } from '../middleware/auth.js';
 import express from 'express';
 
 const router = express.Router();
-
+/*
 // Get ratings by recipe id
 router.get('/', async (req, res) => {
     try{
@@ -33,21 +34,17 @@ router.get('/', async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 });
+*/
 
 // Create a new rating
-router.post('/', async (req, res) => {
+router.post('/', AuthMiddleware, async (req, res) => {
     try {
-        const user = await UserModel.findOne({ id: req.body.user });
-        if (!user || user.isDeleted) {
-            return res.status(400).json({ message: `User with id ${req.body.user} was not found` });
-        }
-
-        const recipe = await RecipeModel.findOne({ id: req.body.recipe, isDeleted: false });
+        const recipe = await RecipeModel.findOne({ id: req.body.parent, isDeleted: false });
         if (!recipe) {
-            return res.status(400).json({ message: `Recipe with id ${req.body.recipe} was not found` });
+            return res.status(400).json({ message: `Recipe with id ${req.body.parent} was not found` });
         }
 
-        const rating = await new RatingModel({ ...req.body, recipe: recipe._id, user: user._id }).save();
+        const rating = await new RatingModel({ ...req.body, parent: recipe._id, user: req.user._id, isEdited: false }).save();
         res.status(201).json(rating.toRatingResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -55,36 +52,43 @@ router.post('/', async (req, res) => {
 });
 
 // Update a rating by id
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', AuthMiddleware, async (req, res) => {
     try {
         const rating = await RatingModel.findOne({ id: req.params.id });
         if (!rating) {
             return res.status(404).json({ message: `Rating with id ${req.params.id} was not found` });
         }
 
-        const updatedRating = await RatingModel.findOneAndUpdate(
-            { id: req.params.id },
-            { ...req.body, lastUpdated: Date.now() },
-            { new: true }
-        );
+        if (rating.user.id !== req.user.id) {
+            return res.status(403).json({ message: 'You do not have permission to update this rating' });
+        }
 
-        const replies = await CommentModel.find({ rating: updatedRating._id }).sort({ createdAt: -1 })
-        res.status(200).json(updatedRating.toRatingResponse(replies));
+        rating.set({
+            ...req.body,
+            isEdited: true,
+            lastUpdated: Date.now()
+        });
+        await rating.save();
+        res.status(200).json(rating.toRatingResponse());
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 });
 
 // Delete a rating by id
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', AuthMiddleware, async (req, res) => {
     try {
         const rating = await RatingModel.findOne({ id: req.params.id });
         if (!rating) {
             return res.status(404).json({ message: `Rating with id ${req.params.id} was not found` });
         }
 
-        await RatingModel.deleteOne({ id: req.params.id });
-        await CommentModel.deleteMany({ rating: rating._id });
+        if (req.user.role !== 'admin' && rating.user.id !== req.user.id) {
+            return res.status(403).json({ message: 'You do not have permission to delete this rating' });
+        }
+
+        await rating.deleteOne();
+        //await CommentModel.deleteMany({ rating: rating._id });
         res.status(200).json({ message: `Rating deleted` });
     } catch (error) {
         res.status(400).json({ message: error.message });

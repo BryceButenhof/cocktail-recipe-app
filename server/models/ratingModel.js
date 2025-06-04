@@ -11,7 +11,7 @@ const RatingSchema = new Schema({
         immutable: true,
         index: true
     },
-    recipe: {
+    parent: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'recipes',
         required: true,
@@ -28,13 +28,26 @@ const RatingSchema = new Schema({
     rating: {
         type: Number,
         required: true,
-        min: 1,
-        max: 5
+        min: 0,
+        max: 5,
+        index: true
     },
     comment: {
         type: String,
-        default: null,
-        required: false
+        required: false,
+    },
+    replies: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'comments',
+            required: false,
+            index: true
+        }
+    ],
+    isEdited: {
+        type: Boolean,
+        required: true,
+        default: false
     },
     createdAt: {
         type: Date,
@@ -49,17 +62,18 @@ const RatingSchema = new Schema({
     }
 });
 
-RatingSchema.methods.toRatingResponse = function(replies) {
+RatingSchema.methods.toRatingResponse = function() {
     return {
         id: this.id,
         user: this.user,
         rating: this.rating,
         comment: this.comment,
-        replies: replies || [],
+        replies: this.replies,
+        isEdited: this.isEdited,
         createdAt: this.createdAt,
         lastUpdated: this.lastUpdated
     };
-};
+}
 
 const fieldsToPopulate = [
     {
