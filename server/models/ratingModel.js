@@ -36,6 +36,11 @@ const RatingSchema = new Schema({
         type: String,
         required: false,
     },
+    imageUrl: {
+        type: String,
+        default: null,
+        required: false
+    },
     replies: [
         {
             type: mongoose.Schema.Types.ObjectId,
@@ -68,6 +73,7 @@ RatingSchema.methods.toRatingResponse = function(showRefs) {
         user: this.user,
         rating: this.rating,
         comment: this.comment,
+        imageUrl: this.imageUrl,
         isEdited: this.isEdited,
         createdAt: this.createdAt,
         lastUpdated: this.lastUpdated
