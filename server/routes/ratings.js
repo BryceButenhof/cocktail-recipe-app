@@ -1,5 +1,6 @@
 import { RecipeModel } from '../models/recipeModel.js';
 import { RatingModel } from '../models/ratingModel.js';
+import { CommentModel } from '../models/commentModel.js';
 import { AuthMiddleware } from '../middleware/auth.js';
 import express from 'express';
 
@@ -15,16 +16,11 @@ router.get('/:id', async (req, res) => {
 
         await rating.populate([
             {
-                'path': 'parent',
-                'select': [ 'id', 'name', '-_id' ]
-            },
-            {
                 'path': 'replies',
                 'select': ['id', 'user', 'comment', '-_id' ]
             }
         ]);
-
-        res.status(200).json(rating.toRatingResponse(true));
+        res.status(200).json(rating.toRatingResponse(true, true));
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
@@ -39,7 +35,7 @@ router.post('/', AuthMiddleware, async (req, res) => {
         }
 
         const rating = await new RatingModel({ ...req.body, parent: recipe._id, user: req.user._id, isEdited: false }).save();
-        res.status(201).json(rating.toRatingResponse(false));
+        res.status(201).json(rating.toRatingResponse(true, false));
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
@@ -63,7 +59,7 @@ router.patch('/:id', AuthMiddleware, async (req, res) => {
             lastUpdated: Date.now()
         });
         await rating.save();
-        res.status(200).json(rating.toRatingResponse(false));
+        res.status(200).json(rating.toRatingResponse(true, false));
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
@@ -81,7 +77,8 @@ router.delete('/:id', AuthMiddleware, async (req, res) => {
             return res.status(403).json({ message: 'You do not have permission to delete this rating' });
         }
 
-        //TODO delete associated comments
+        // Delete all replies
+        await CommentModel.deleteMany({ root: rating._id });
         await rating.deleteOne();
         res.status(200).json({ message: `Rating deleted` });
     } catch (error) {

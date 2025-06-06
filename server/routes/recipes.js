@@ -1,5 +1,7 @@
 import { RecipeModel } from "../models/recipeModel.js";
 import { IngredientModel } from "../models/ingredientModel.js";
+import { RatingModel } from "../models/ratingModel.js";
+import { CommentModel } from "../models/commentModel.js";
 import { AuthMiddleware } from '../middleware/auth.js';
 import express from 'express';
 
@@ -57,6 +59,16 @@ const calculateABV = (ingredientDocuments, ingredientsRequest, method) => {
     }
 
     return totalAlcohol / totalVolume * 100
+};
+
+const deleteRatingsAndComments = async (recipe) => {
+    // Delete all associated comments
+    const ratings = await RatingModel.find({ parent: recipe._id });
+    const rootIds = [ recipe._id, ...ratings.map(rating => rating._id) ];
+    await CommentModel.deleteMany({ root: { $in: rootIds } });
+
+    // Delete all associated ratings
+    await RatingModel.deleteMany({ parent: recipe._id });
 };
 
 // Get all recipes
@@ -168,6 +180,7 @@ router.delete('/:id', AuthMiddleware, async (req, res) => {
             lastUpdated: Date.now()
         });
         await recipe.save();
+        await deleteRatingsAndComments(recipe);
         res.status(200).json({ message: 'Recipe deleted' });
     } catch (error) {
         res.status(400).json({ message: error.message });

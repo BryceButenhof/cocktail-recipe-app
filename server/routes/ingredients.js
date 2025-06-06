@@ -1,5 +1,5 @@
 import express from 'express';
-import { UserModel } from '../models/userModel.js';
+import { CommentModel } from '../models/commentModel.js';
 import { IngredientModel } from '../models/ingredientModel.js';
 import { AuthMiddleware } from '../middleware/auth.js';
 const router = express.Router();
@@ -77,6 +77,7 @@ router.delete('/:id', AuthMiddleware, async (req, res) => {
 
         ingredient.set({ isDeleted: true, lastUpdated: Date.now() });
         await ingredient.save();
+        await CommentModel.deleteMany({ root: ingredient._id });
         res.status(200).json({ message: 'Ingredient deleted' });
     } catch (error) {
         res.status(404).json({ message: error.message });

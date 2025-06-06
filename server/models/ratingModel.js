@@ -67,7 +67,7 @@ const RatingSchema = new Schema({
     }
 });
 
-RatingSchema.methods.toRatingResponse = function(showRefs) {
+RatingSchema.methods.toRatingResponse = function(showRefs, showReplies) {
     const result = {
         id: this.id,
         user: this.user,
@@ -81,6 +81,9 @@ RatingSchema.methods.toRatingResponse = function(showRefs) {
 
     if (showRefs) {
         result.parent = this.parent
+    }
+
+    if (showReplies) {
         result.replies = this.replies;
     }
 
@@ -88,6 +91,10 @@ RatingSchema.methods.toRatingResponse = function(showRefs) {
 }
 
 const fieldsToPopulate = [
+    {
+        'path': 'parent',
+        'select': [ 'id', 'name', '-_id' ]
+    },
     {
         'path': 'user',
         'select': [ 'id', 'username', 'isDeleted', '-_id']
