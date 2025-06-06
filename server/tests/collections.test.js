@@ -396,8 +396,6 @@ describe("Collection API Tests", () => {
         it("Should delete a collection as a valid user", async () => {
             const res = await request(app).delete(`/collections/${collection1Id}`)
                 .set('Authorization', `Bearer ${user1Token}`);
-                            console.log(res.body.message);
-
             expect(res.statusCode).toBe(200);
             expect(res.body.message).toBe('Collection deleted');
         });
